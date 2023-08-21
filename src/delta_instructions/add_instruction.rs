@@ -193,13 +193,12 @@ mod add_instruction_tests {
 
     #[test]
     fn from_bytes_sign_err() {
-        let mut add_bytes = vec![b' '];
-        add_bytes.extend(AddInstructionlength::default().to_be_bytes());
+        let add_bytes = vec![];
         let default_add = AddInstruction::from_bytes(&mut add_bytes.iter());
         assert!(default_add.is_err());
         assert_eq!(
             default_add.unwrap_err(),
-            AddInstructionError::InvalidSignByte(b' ')
+            AddInstructionError::InvalidSignByte(None)
         );
     }
 
@@ -210,7 +209,7 @@ mod add_instruction_tests {
         assert!(default_add.is_err());
         assert_eq!(
             default_add.unwrap_err(),
-            AddInstructionError::InvalidLengthBytes(0)
+            AddInstructionError::InvalidLengthBytes(None)
         );
     }
 

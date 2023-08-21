@@ -7,8 +7,8 @@ use super::add_instruction::AddInstructionlength;
 #[derive(Debug, PartialEq)]
 pub enum InstructionError {
     MaxLengthReached(usize),
-    InvalidSignByte(u8, u8),
-    InvalidLengthBytes(usize, usize),
+    InvalidSignByte(Option<u8>, u8),
+    InvalidLengthBytes(Option<usize>, usize),
     MissingByteContent(usize, usize),
 }
 
@@ -16,8 +16,14 @@ impl Display for InstructionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             InstructionError::MaxLengthReached(max_content_length) => write!(f, "Can't fill this delta instruction type past {max_content_length} values. Try creating a new instruction instead."),
-            InstructionError::InvalidSignByte(found_sign, expected_sign) => write!(f, "Expected this instruction sign: {expected_sign}. But found something this instead: {found_sign}."),
-            InstructionError::InvalidLengthBytes(found_number_length, expected_number_length) => write!(f, "Couldn't construct the instruction content length indicator with {found_number_length} bytes. (Needed {expected_number_length}.)"),
+            InstructionError::InvalidSignByte(found_sign, expected_sign) => write!(f, "Expected this instruction sign: {expected_sign}. But found this instead: {}.", match found_sign {
+                Some(sign) => format!("{}", sign),
+                None => "nothing".to_string(),
+            }),
+            InstructionError::InvalidLengthBytes(found_number_length, expected_number_length) => write!(f, "Couldn't construct the instruction content length indicator with {} bytes. (Needed {expected_number_length}.)", match found_number_length {
+                Some(length) => format!("{}", length),
+                None => "no".to_string(),
+            }),
             InstructionError::MissingByteContent(found_content_length, expected_content_length) => write!(f, "Expected an instruction content length of {expected_content_length} but found it was {found_content_length} long instead."),
         }
     }
@@ -28,8 +34,8 @@ impl Error for InstructionError {}
 #[derive(Debug, PartialEq)]
 pub enum AddInstructionError {
     MaxLengthReached,
-    InvalidSignByte(u8),
-    InvalidLengthBytes(usize),
+    InvalidSignByte(Option<u8>),
+    InvalidLengthBytes(Option<usize>),
     MissingByteContent(usize, AddInstructionlength),
 }
 
@@ -37,8 +43,14 @@ impl Display for AddInstructionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             AddInstructionError::MaxLengthReached => write!(f, "Can't fill this delta instruction type past {} values. Try creating a new instruction instead.", AddInstructionlength::MAX),
-            AddInstructionError::InvalidSignByte(found_sign) => write!(f, "Expected this instruction sign: b'+'. But found something this instead: {found_sign}."),
-            AddInstructionError::InvalidLengthBytes(found_number_length) => write!(f, "Couldn't construct the instruction content length indicator with {found_number_length} bytes. (Needed {}.)", std::mem::size_of::<AddInstructionlength>()),
+            AddInstructionError::InvalidSignByte(found_sign) => write!(f, "Expected this instruction sign: b'+'. But found something this instead: {}.", match found_sign {
+                Some(sign) => format!("{}", sign),
+                None => "nothing".to_string(),
+            }),
+            AddInstructionError::InvalidLengthBytes(found_number_length) => write!(f, "Couldn't construct the instruction content length indicator with {} bytes. (Needed {}.)",match found_number_length {
+                Some(length) => format!("{}", length),
+                None => "no".to_string(),
+            }, std::mem::size_of::<AddInstructionlength>()),
             AddInstructionError::MissingByteContent(found_content_length, expected_content_length) => write!(f, "Expected an instruction content length of {expected_content_length} but found it was {found_content_length} long instead."),
         }
     }
@@ -83,12 +95,12 @@ mod instruction_error_tests {
             InstructionError::MaxLengthReached(AddInstructionlength::MAX.into())
         );
         assert_eq!(
-            InstructionError::from(AddInstructionError::InvalidSignByte(b'-')),
-            InstructionError::InvalidSignByte(b'-', b'+')
+            InstructionError::from(AddInstructionError::InvalidSignByte(Some(b'-'))),
+            InstructionError::InvalidSignByte(Some(b'-'), b'+')
         );
         assert_eq!(
-            InstructionError::from(AddInstructionError::InvalidLengthBytes(0)),
-            InstructionError::InvalidLengthBytes(0, std::mem::size_of::<AddInstructionlength>())
+            InstructionError::from(AddInstructionError::InvalidLengthBytes(None)),
+            InstructionError::InvalidLengthBytes(None, std::mem::size_of::<AddInstructionlength>())
         );
         assert_eq!(
             InstructionError::from(AddInstructionError::MissingByteContent(0, 1)),
