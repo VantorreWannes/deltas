@@ -3,7 +3,7 @@ use std::{error::Error, fmt::{Display, Formatter}};
 use super::{
     add_instruction::{AddInstruction, AddInstructionlength},
     remove_instruction::{RemoveInstruction, RemoveInstructionlength},
-    traits::InstructionBytes,
+    traits::InstructionBytes, copy_instruction::CopyInstructionlength,
 };
 
 #[derive(Debug, PartialEq)]
@@ -132,6 +132,55 @@ impl From<RemoveInstructionError> for InstructionError {
         }
     }
 }
+
+
+#[derive(Debug, PartialEq)]
+pub enum CopyInstructionError {
+    MaxLengthReached,
+    InvalidSignByte(Option<u8>),
+    InvalidLengthBytes(Option<usize>),
+}
+
+impl Display for CopyInstructionError  {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        match self {
+            CopyInstructionError::MaxLengthReached => write!(f, "Can't fill this delta instruction type past {} values. Try creating a new instruction instead.", CopyInstructionlength::MAX),
+            CopyInstructionError::InvalidSignByte(found_sign) => write!(f, "Expected this instruction sign: {}. But found something this instead: {}.", b'-', match found_sign {
+                Some(sign) => format!("{}", sign),
+                None => "nothing".to_string(),
+            }),
+            CopyInstructionError::InvalidLengthBytes(found_number_length) => write!(f, "Couldn't construct the instruction content length indicator with {} bytes. (Needed {}.)",match found_number_length {
+                Some(length) => format!("{}", length),
+                None => "no".to_string(),
+            }, std::mem::size_of::<RemoveInstructionlength>()),
+        }
+    }
+}
+
+impl Error for CopyInstructionError {}
+
+impl From<CopyInstructionError> for InstructionError {
+    fn from(value: CopyInstructionError) -> Self {
+        match value {
+            CopyInstructionError::MaxLengthReached => {
+                InstructionError::MaxLengthReached(RemoveInstructionlength::MAX.into())
+            }
+            CopyInstructionError::InvalidSignByte(found_sign) => {
+                InstructionError::InvalidSignByte(
+                    found_sign,
+                    RemoveInstruction::INSTRUCTION_BYTE_SIGN,
+                )
+            }
+            CopyInstructionError::InvalidLengthBytes(found_number_length) => {
+                InstructionError::InvalidLengthBytes(
+                    found_number_length,
+                    std::mem::size_of::<RemoveInstructionlength>(),
+                )
+            }
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod instruction_error_tests {
