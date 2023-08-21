@@ -101,3 +101,89 @@ impl TryFrom<Iter<'_, u8>> for RemoveInstruction {
         RemoveInstruction::from_bytes(&mut value)
     }
 }
+
+
+#[cfg(test)]
+mod remove_instruction_tests {
+    use super::*;
+
+    #[test]
+    fn new() {
+        let length: RemoveInstructionlength = RemoveInstructionlength::MAX;
+        let new_remove = RemoveInstruction::new(length);
+        assert_eq!(new_remove, RemoveInstruction { length });
+    }
+
+    #[test]
+    fn default() {
+        let new_remove = RemoveInstruction::new(0);
+        assert_eq!(new_remove, RemoveInstruction::default());
+    }
+
+    #[test]
+    fn len() {
+        let new_remove = RemoveInstruction::new(10);
+        assert_eq!(new_remove.len(), 10);
+    }
+
+    #[test]
+    fn is_empty() {
+        let mut default_remove = RemoveInstruction::default();
+        assert!(default_remove.is_empty());
+        default_remove.push(b'A').unwrap();
+        assert!(!default_remove.is_empty());
+    }
+
+    #[test]
+    fn push() {
+        let mut new_remove = RemoveInstruction::new(RemoveInstructionlength::MAX - 1);
+        assert!(new_remove.push(0).is_ok());
+        assert_eq!(new_remove.len(), RemoveInstructionlength::MAX.into());
+        assert!(new_remove.push(0).is_err());
+        assert_eq!(new_remove.len(), RemoveInstructionlength::MAX.into());
+    }
+
+    #[test]
+    fn into_bytes() {
+        let mut default_remove = RemoveInstruction::default();
+        assert_eq!(
+            default_remove.to_bytes(),
+            vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN, 0]
+        );
+        default_remove.push(b'A').unwrap();
+        assert_eq!(
+            default_remove.to_bytes(),
+            vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN, 1]
+        );
+    }
+
+    #[test]
+    fn from_bytes_ok() {
+        let mut add_bytes = vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN];
+        add_bytes.extend(RemoveInstructionlength::default().to_be_bytes());
+        let default_add = RemoveInstruction::from_bytes(&mut add_bytes.iter());
+        assert!(default_add.is_ok());
+    }
+
+    #[test]
+    fn from_bytes_sign_err() {
+        let remove_bytes = vec![];
+        let default_remove = RemoveInstruction::from_bytes(&mut remove_bytes.iter());
+        assert!(default_remove.is_err());
+        assert_eq!(
+            default_remove.unwrap_err(),
+            RemoveInstructionError::InvalidSignByte(None)
+        );
+    }
+
+    #[test]
+    fn from_bytes_length_err() {
+        let add_bytes = vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN];
+        let default_add = RemoveInstruction::from_bytes(&mut add_bytes.iter());
+        assert!(default_add.is_err());
+        assert_eq!(
+            default_add.unwrap_err(),
+            RemoveInstructionError::InvalidLengthBytes(None)
+        );
+    }
+}
