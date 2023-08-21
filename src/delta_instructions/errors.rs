@@ -1,8 +1,10 @@
-use std::error::Error;
-use std::fmt::Display;
-use std::fmt::Formatter;
+use std::{error::Error, fmt::{Display, Formatter}};
 
-use super::add_instruction::AddInstructionlength;
+use super::{
+    add_instruction::{AddInstruction, AddInstructionlength},
+    remove_instruction::{RemoveInstruction, RemoveInstructionlength},
+    traits::InstructionBytes,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum InstructionError {
@@ -65,7 +67,7 @@ impl From<AddInstructionError> for InstructionError {
                 InstructionError::MaxLengthReached(AddInstructionlength::MAX.into())
             }
             AddInstructionError::InvalidSignByte(found_sign) => {
-                InstructionError::InvalidSignByte(found_sign, b'+')
+                InstructionError::InvalidSignByte(found_sign, AddInstruction::INSTRUCTION_BYTE_SIGN)
             }
             AddInstructionError::InvalidLengthBytes(found_number_length) => {
                 InstructionError::InvalidLengthBytes(
@@ -80,6 +82,53 @@ impl From<AddInstructionError> for InstructionError {
                 found_content_length,
                 expected_content_length.into(),
             ),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum RemoveInstructionError {
+    MaxLengthReached,
+    InvalidSignByte(Option<u8>),
+    InvalidLengthBytes(Option<usize>),
+}
+
+impl Display for RemoveInstructionError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        match self {
+            RemoveInstructionError::MaxLengthReached => write!(f, "Can't fill this delta instruction type past {} values. Try creating a new instruction instead.", RemoveInstructionlength::MAX),
+            RemoveInstructionError::InvalidSignByte(found_sign) => write!(f, "Expected this instruction sign: {}. But found something this instead: {}.", b'-', match found_sign {
+                Some(sign) => format!("{}", sign),
+                None => "nothing".to_string(),
+            }),
+            RemoveInstructionError::InvalidLengthBytes(found_number_length) => write!(f, "Couldn't construct the instruction content length indicator with {} bytes. (Needed {}.)",match found_number_length {
+                Some(length) => format!("{}", length),
+                None => "no".to_string(),
+            }, std::mem::size_of::<RemoveInstructionlength>()),
+        }
+    }
+}
+
+impl Error for RemoveInstructionError {}
+
+impl From<RemoveInstructionError> for InstructionError {
+    fn from(value: RemoveInstructionError) -> Self {
+        match value {
+            RemoveInstructionError::MaxLengthReached => {
+                InstructionError::MaxLengthReached(RemoveInstructionlength::MAX.into())
+            }
+            RemoveInstructionError::InvalidSignByte(found_sign) => {
+                InstructionError::InvalidSignByte(
+                    found_sign,
+                    RemoveInstruction::INSTRUCTION_BYTE_SIGN,
+                )
+            }
+            RemoveInstructionError::InvalidLengthBytes(found_number_length) => {
+                InstructionError::InvalidLengthBytes(
+                    found_number_length,
+                    std::mem::size_of::<RemoveInstructionlength>(),
+                )
+            }
         }
     }
 }
@@ -105,6 +154,22 @@ mod instruction_error_tests {
         assert_eq!(
             InstructionError::from(AddInstructionError::MissingByteContent(0, 1)),
             InstructionError::MissingByteContent(0, 1)
+        );
+    }
+
+    #[test]
+    fn from_remove_error() {
+        assert_eq!(
+            InstructionError::from(RemoveInstructionError::MaxLengthReached),
+            InstructionError::MaxLengthReached(RemoveInstructionlength::MAX.into())
+        );
+        assert_eq!(
+            InstructionError::from(RemoveInstructionError::InvalidSignByte(Some(b'+'))),
+            InstructionError::InvalidSignByte(Some(b'+'), b'-')
+        );
+        assert_eq!(
+            InstructionError::from(RemoveInstructionError::InvalidLengthBytes(None)),
+            InstructionError::InvalidLengthBytes(None, std::mem::size_of::<AddInstructionlength>())
         );
     }
 }
