@@ -6,7 +6,7 @@ use std::{mem, slice::Iter};
 
 pub type AddInstructionlength = u8;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct AddInstruction {
     content: Vec<u8>,
 }
@@ -21,7 +21,7 @@ impl AddInstruction {
         })
     }
 
-    pub fn len(&self) -> u8 {
+    pub fn len(&self) -> AddInstructionlength {
         debug_assert!(self.content.len() <= AddInstructionlength::MAX.into());
         self.content.len().try_into().unwrap()
     }
@@ -43,11 +43,7 @@ impl PushToInstruction for AddInstruction {
     }
 }
 
-impl Default for AddInstruction {
-    fn default() -> Self {
-        return Self { content: vec![] };
-    }
-}
+
 
 impl InstructionBytes for AddInstruction {
     type Error = AddInstructionError;
@@ -56,7 +52,7 @@ impl InstructionBytes for AddInstruction {
 
     fn to_bytes(&self) -> Vec<u8> {
         debug_assert!(self.content.len() <= AddInstructionlength::MAX.into());
-        let mut bytes: Vec<u8> = Vec::with_capacity(self.content.len() + 2);
+        let mut bytes: Vec<u8> = Vec::with_capacity(self.content.len() + 1 + Self::NUMBER_BYTES_LENGTH);
         bytes.push(Self::INSTRUCTION_BYTE_SIGN);
         bytes.extend((self.content.len() as AddInstructionlength).to_be_bytes());
         bytes.extend(self.content.iter());
@@ -67,16 +63,17 @@ impl InstructionBytes for AddInstruction {
     where
         Self: Sized,
     {
-        let sign = bytes
-            .next()
-            .ok_or(AddInstructionError::InvalidSignByte(b' '))?;
-        if sign != &b'+' {
-            return Err(AddInstructionError::InvalidSignByte(*sign));
-        }
+        match bytes.next() {
+            Some(&Self::INSTRUCTION_BYTE_SIGN) => Ok(()),
+            Some(byte) => Err(AddInstructionError::InvalidSignByte(Some(*byte))),
+            None => Err(AddInstructionError::InvalidSignByte(None)),
+        }?;
 
-        if bytes.size_hint().0 < Self::NUMBER_BYTES_LENGTH {
-            return Err(AddInstructionError::InvalidLengthBytes(bytes.size_hint().0));
-        }
+        match bytes.size_hint().0 {
+            0 => Err(AddInstructionError::InvalidLengthBytes(None)),
+            number_bytes_length if number_bytes_length < Self::NUMBER_BYTES_LENGTH => Err(AddInstructionError::InvalidLengthBytes(Some(number_bytes_length))),
+            number_bytes_length => Ok(number_bytes_length),
+        }?;
 
         let number_bytes: [u8; Self::NUMBER_BYTES_LENGTH] = bytes
             .take(Self::NUMBER_BYTES_LENGTH)
