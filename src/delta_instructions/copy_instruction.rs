@@ -15,7 +15,7 @@ impl CopyInstruction {
         Self { length: length.into() }
     }
 
-    pub fn len(&self) -> u8 {
+    pub fn len(&self) -> CopyInstructionlength {
         self.length
     }
 
@@ -104,57 +104,55 @@ impl TryFrom<Iter<'_, u8>> for CopyInstruction {
 
 
 #[cfg(test)]
-mod remove_instruction_tests {
+mod copy_instruction_tests {
     use super::*;
 
     #[test]
     fn new() {
         let length: CopyInstructionlength = CopyInstructionlength::MAX;
-        let new_remove = CopyInstruction::new(length);
-        assert_eq!(new_remove, CopyInstruction { length });
+        let new_copy = CopyInstruction::new(length);
+        assert_eq!(new_copy, CopyInstruction { length });
     }
 
     #[test]
     fn default() {
-        let new_remove = CopyInstruction::new(0);
-        assert_eq!(new_remove, CopyInstruction::default());
+        let new_copy = CopyInstruction::new(0u8);
+        assert_eq!(new_copy, CopyInstruction::default());
     }
 
     #[test]
     fn len() {
-        let new_remove = CopyInstruction::new(10);
-        assert_eq!(new_remove.len(), 10);
+        let new_copy = CopyInstruction::new(10u8);
+        assert_eq!(new_copy.len(), 10);
     }
 
     #[test]
     fn is_empty() {
-        let mut default_remove = CopyInstruction::default();
-        assert!(default_remove.is_empty());
-        default_remove.push(b'A').unwrap();
-        assert!(!default_remove.is_empty());
+        let mut default_copy = CopyInstruction::default();
+        assert!(default_copy.is_empty());
+        default_copy.push(b'A').unwrap();
+        assert!(!default_copy.is_empty());
     }
 
     #[test]
     fn push() {
-        let mut new_remove = CopyInstruction::new(CopyInstructionlength::MAX - 1);
-        assert!(new_remove.push(0).is_ok());
-        assert_eq!(new_remove.len(), CopyInstructionlength::MAX.into());
-        assert!(new_remove.push(0).is_err());
-        assert_eq!(new_remove.len(), CopyInstructionlength::MAX.into());
+        let mut new_copy = CopyInstruction::new(CopyInstructionlength::MAX - 1);
+        assert!(new_copy.push(0).is_ok());
+        assert_eq!(new_copy.len(), CopyInstructionlength::MAX.try_into().unwrap());
+        assert!(new_copy.push(0).is_err());
+        assert_eq!(new_copy.len(), CopyInstructionlength::MAX.try_into().unwrap());
     }
 
     #[test]
     fn into_bytes() {
-        let mut default_remove = CopyInstruction::default();
-        assert_eq!(
-            default_remove.to_bytes(),
-            vec![CopyInstruction::INSTRUCTION_BYTE_SIGN, 0]
-        );
-        default_remove.push(b'A').unwrap();
-        assert_eq!(
-            default_remove.to_bytes(),
-            vec![CopyInstruction::INSTRUCTION_BYTE_SIGN, 1]
-        );
+        let mut bytes = vec![CopyInstruction::INSTRUCTION_BYTE_SIGN];
+        bytes.extend(CopyInstructionlength::MIN.to_be_bytes());
+        let mut default_add = CopyInstruction::default();
+        assert_eq!(default_add.to_bytes(), bytes);
+        default_add.push(b'A').unwrap();
+        bytes.resize(1, 0);
+        bytes.extend(CopyInstructionlength::from(1u8).to_be_bytes());
+        assert_eq!(default_add.to_bytes(),bytes);
     }
 
     #[test]
@@ -167,11 +165,11 @@ mod remove_instruction_tests {
 
     #[test]
     fn from_bytes_sign_err() {
-        let remove_bytes = vec![];
-        let default_remove = CopyInstruction::from_bytes(&mut remove_bytes.iter());
-        assert!(default_remove.is_err());
+        let copy_bytes = vec![];
+        let default_copy = CopyInstruction::from_bytes(&mut copy_bytes.iter());
+        assert!(default_copy.is_err());
         assert_eq!(
-            default_remove.unwrap_err(),
+            default_copy.unwrap_err(),
             CopyInstructionError::InvalidSignByte(None)
         );
     }

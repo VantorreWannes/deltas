@@ -3,7 +3,7 @@ use std::{error::Error, fmt::{Display, Formatter}};
 use super::{
     add_instruction::{AddInstruction, AddInstructionlength},
     remove_instruction::{RemoveInstruction, RemoveInstructionlength},
-    traits::InstructionBytes, copy_instruction::CopyInstructionlength,
+    traits::InstructionBytes, copy_instruction::{CopyInstructionlength, CopyInstruction},
 };
 
 #[derive(Debug, PartialEq)]
@@ -64,7 +64,7 @@ impl From<AddInstructionError> for InstructionError {
     fn from(value: AddInstructionError) -> Self {
         match value {
             AddInstructionError::MaxLengthReached => {
-                InstructionError::MaxLengthReached(AddInstructionlength::MAX.into())
+                InstructionError::MaxLengthReached(AddInstructionlength::MAX.try_into().unwrap())
             }
             AddInstructionError::InvalidSignByte(found_sign) => {
                 InstructionError::InvalidSignByte(found_sign, AddInstruction::INSTRUCTION_BYTE_SIGN)
@@ -80,7 +80,7 @@ impl From<AddInstructionError> for InstructionError {
                 expected_content_length,
             ) => InstructionError::MissingByteContent(
                 found_content_length,
-                expected_content_length.into(),
+                expected_content_length.try_into().unwrap(),
             ),
         }
     }
@@ -115,7 +115,7 @@ impl From<RemoveInstructionError> for InstructionError {
     fn from(value: RemoveInstructionError) -> Self {
         match value {
             RemoveInstructionError::MaxLengthReached => {
-                InstructionError::MaxLengthReached(RemoveInstructionlength::MAX.into())
+                InstructionError::MaxLengthReached(RemoveInstructionlength::MAX.try_into().unwrap())
             }
             RemoveInstructionError::InvalidSignByte(found_sign) => {
                 InstructionError::InvalidSignByte(
@@ -163,18 +163,18 @@ impl From<CopyInstructionError> for InstructionError {
     fn from(value: CopyInstructionError) -> Self {
         match value {
             CopyInstructionError::MaxLengthReached => {
-                InstructionError::MaxLengthReached(RemoveInstructionlength::MAX.into())
+                InstructionError::MaxLengthReached(CopyInstructionlength::MAX.try_into().unwrap())
             }
             CopyInstructionError::InvalidSignByte(found_sign) => {
                 InstructionError::InvalidSignByte(
                     found_sign,
-                    RemoveInstruction::INSTRUCTION_BYTE_SIGN,
+                    CopyInstruction::INSTRUCTION_BYTE_SIGN,
                 )
             }
             CopyInstructionError::InvalidLengthBytes(found_number_length) => {
                 InstructionError::InvalidLengthBytes(
                     found_number_length,
-                    std::mem::size_of::<RemoveInstructionlength>(),
+                    std::mem::size_of::<CopyInstructionlength>(),
                 )
             }
         }
@@ -190,11 +190,11 @@ mod instruction_error_tests {
     fn from_add_error() {
         assert_eq!(
             InstructionError::from(AddInstructionError::MaxLengthReached),
-            InstructionError::MaxLengthReached(AddInstructionlength::MAX.into())
+            InstructionError::MaxLengthReached(AddInstructionlength::MAX.try_into().unwrap())
         );
         assert_eq!(
-            InstructionError::from(AddInstructionError::InvalidSignByte(Some(b'-'))),
-            InstructionError::InvalidSignByte(Some(b'-'), b'+')
+            InstructionError::from(AddInstructionError::InvalidSignByte(Some(b'A'))),
+            InstructionError::InvalidSignByte(Some(b'A'), AddInstruction::INSTRUCTION_BYTE_SIGN)
         );
         assert_eq!(
             InstructionError::from(AddInstructionError::InvalidLengthBytes(None)),
@@ -210,15 +210,31 @@ mod instruction_error_tests {
     fn from_remove_error() {
         assert_eq!(
             InstructionError::from(RemoveInstructionError::MaxLengthReached),
-            InstructionError::MaxLengthReached(RemoveInstructionlength::MAX.into())
+            InstructionError::MaxLengthReached(RemoveInstructionlength::MAX.try_into().unwrap())
         );
         assert_eq!(
-            InstructionError::from(RemoveInstructionError::InvalidSignByte(Some(b'+'))),
-            InstructionError::InvalidSignByte(Some(b'+'), b'-')
+            InstructionError::from(RemoveInstructionError::InvalidSignByte(Some(b'A'))),
+            InstructionError::InvalidSignByte(Some(b'A'), RemoveInstruction::INSTRUCTION_BYTE_SIGN)
         );
         assert_eq!(
             InstructionError::from(RemoveInstructionError::InvalidLengthBytes(None)),
-            InstructionError::InvalidLengthBytes(None, std::mem::size_of::<AddInstructionlength>())
+            InstructionError::InvalidLengthBytes(None, std::mem::size_of::<RemoveInstructionlength>())
+        );
+    }
+
+    #[test]
+    fn from_copy_error() {
+        assert_eq!(
+            InstructionError::from(CopyInstructionError::MaxLengthReached),
+            InstructionError::MaxLengthReached(CopyInstructionlength::MAX.try_into().unwrap())
+        );
+        assert_eq!(
+            InstructionError::from(CopyInstructionError::InvalidSignByte(Some(b'A'))),
+            InstructionError::InvalidSignByte(Some(b'A'), CopyInstruction::INSTRUCTION_BYTE_SIGN)
+        );
+        assert_eq!(
+            InstructionError::from(CopyInstructionError::InvalidLengthBytes(None)),
+            InstructionError::InvalidLengthBytes(None, std::mem::size_of::<CopyInstructionlength>())
         );
     }
 }

@@ -15,7 +15,7 @@ impl RemoveInstruction {
         Self { length: length.into() }
     }
 
-    pub fn len(&self) -> u8 {
+    pub fn len(&self) -> RemoveInstructionlength {
         self.length
     }
 
@@ -116,13 +116,13 @@ mod remove_instruction_tests {
 
     #[test]
     fn default() {
-        let new_remove = RemoveInstruction::new(0);
+        let new_remove = RemoveInstruction::new(0u8);
         assert_eq!(new_remove, RemoveInstruction::default());
     }
 
     #[test]
     fn len() {
-        let new_remove = RemoveInstruction::new(10);
+        let new_remove = RemoveInstruction::new(10u8);
         assert_eq!(new_remove.len(), 10);
     }
 
@@ -138,31 +138,29 @@ mod remove_instruction_tests {
     fn push() {
         let mut new_remove = RemoveInstruction::new(RemoveInstructionlength::MAX - 1);
         assert!(new_remove.push(0).is_ok());
-        assert_eq!(new_remove.len(), RemoveInstructionlength::MAX.into());
+        assert_eq!(new_remove.len(), RemoveInstructionlength::MAX.try_into().unwrap());
         assert!(new_remove.push(0).is_err());
-        assert_eq!(new_remove.len(), RemoveInstructionlength::MAX.into());
+        assert_eq!(new_remove.len(), RemoveInstructionlength::MAX.try_into().unwrap());
     }
 
     #[test]
     fn into_bytes() {
+        let mut bytes = vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN];
+        bytes.extend(RemoveInstructionlength::MIN.to_be_bytes());
         let mut default_remove = RemoveInstruction::default();
-        assert_eq!(
-            default_remove.to_bytes(),
-            vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN, 0]
-        );
+        assert_eq!(default_remove.to_bytes(), bytes);
         default_remove.push(b'A').unwrap();
-        assert_eq!(
-            default_remove.to_bytes(),
-            vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN, 1]
-        );
+        bytes.resize(1, 0);
+        bytes.extend(RemoveInstructionlength::from(1u8).to_be_bytes());
+        assert_eq!(default_remove.to_bytes(),bytes);
     }
 
     #[test]
     fn from_bytes_ok() {
-        let mut add_bytes = vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN];
-        add_bytes.extend(RemoveInstructionlength::default().to_be_bytes());
-        let default_add = RemoveInstruction::from_bytes(&mut add_bytes.iter());
-        assert!(default_add.is_ok());
+        let mut remove_bytes = vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN];
+        remove_bytes.extend(RemoveInstructionlength::default().to_be_bytes());
+        let default_remove = RemoveInstruction::from_bytes(&mut remove_bytes.iter());
+        assert!(default_remove.is_ok());
     }
 
     #[test]
@@ -178,11 +176,11 @@ mod remove_instruction_tests {
 
     #[test]
     fn from_bytes_length_err() {
-        let add_bytes = vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN];
-        let default_add = RemoveInstruction::from_bytes(&mut add_bytes.iter());
-        assert!(default_add.is_err());
+        let remove_bytes = vec![RemoveInstruction::INSTRUCTION_BYTE_SIGN];
+        let default_remove = RemoveInstruction::from_bytes(&mut remove_bytes.iter());
+        assert!(default_remove.is_err());
         assert_eq!(
-            default_add.unwrap_err(),
+            default_remove.unwrap_err(),
             RemoveInstructionError::InvalidLengthBytes(None)
         );
     }

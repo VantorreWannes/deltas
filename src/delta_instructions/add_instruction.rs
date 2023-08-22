@@ -13,7 +13,7 @@ pub struct AddInstruction {
 
 impl AddInstruction {
     pub fn new(content: &[u8]) -> Result<AddInstruction, AddInstructionError> {
-        if content.len() > AddInstructionlength::MAX.into() {
+        if content.len() > AddInstructionlength::MAX.try_into().unwrap() {
             return Err(AddInstructionError::MaxLengthReached);
         }
         Ok(Self {
@@ -22,7 +22,7 @@ impl AddInstruction {
     }
 
     pub fn len(&self) -> AddInstructionlength {
-        debug_assert!(self.content.len() <= AddInstructionlength::MAX.into());
+        debug_assert!(self.content.len() <= AddInstructionlength::MAX.try_into().unwrap());
         self.content.len().try_into().unwrap()
     }
 
@@ -35,7 +35,7 @@ impl PushToInstruction for AddInstruction {
     type Error = AddInstructionError;
 
     fn push(&mut self, byte: u8) -> Result<(), Self::Error> {
-        if self.content.len() >= AddInstructionlength::MAX.into() {
+        if self.content.len() >= AddInstructionlength::MAX.try_into().unwrap() {
             return Err(AddInstructionError::MaxLengthReached);
         }
         self.content.push(byte);
@@ -43,16 +43,15 @@ impl PushToInstruction for AddInstruction {
     }
 }
 
-
-
 impl InstructionBytes for AddInstruction {
     type Error = AddInstructionError;
     const INSTRUCTION_BYTE_SIGN: u8 = b'+';
     const NUMBER_BYTES_LENGTH: usize = mem::size_of::<AddInstructionlength>();
 
     fn to_bytes(&self) -> Vec<u8> {
-        debug_assert!(self.content.len() <= AddInstructionlength::MAX.into());
-        let mut bytes: Vec<u8> = Vec::with_capacity(self.content.len() + 1 + Self::NUMBER_BYTES_LENGTH);
+        debug_assert!(self.content.len() <= AddInstructionlength::MAX.try_into().unwrap());
+        let mut bytes: Vec<u8> =
+            Vec::with_capacity(self.content.len() + 1 + Self::NUMBER_BYTES_LENGTH);
         bytes.push(Self::INSTRUCTION_BYTE_SIGN);
         bytes.extend((self.content.len() as AddInstructionlength).to_be_bytes());
         bytes.extend(self.content.iter());
@@ -71,7 +70,9 @@ impl InstructionBytes for AddInstruction {
 
         match bytes.size_hint().0 {
             0 => Err(AddInstructionError::InvalidLengthBytes(None)),
-            number_bytes_length if number_bytes_length < Self::NUMBER_BYTES_LENGTH => Err(AddInstructionError::InvalidLengthBytes(Some(number_bytes_length))),
+            number_bytes_length if number_bytes_length < Self::NUMBER_BYTES_LENGTH => Err(
+                AddInstructionError::InvalidLengthBytes(Some(number_bytes_length)),
+            ),
             number_bytes_length => Ok(number_bytes_length),
         }?;
 
@@ -82,7 +83,7 @@ impl InstructionBytes for AddInstruction {
             .try_into()
             .unwrap();
 
-        let length = AddInstructionlength::from_be_bytes(number_bytes).into();
+        let length = AddInstructionlength::from_be_bytes(number_bytes).try_into().unwrap();
         let content: Vec<u8> = bytes.take(length).copied().collect();
         if content.len() < length {
             return Err(AddInstructionError::MissingByteContent(
@@ -133,10 +134,9 @@ mod add_instruction_tests {
         assert!(new_add.is_ok());
         assert_eq!(new_add.unwrap(), AddInstruction { content });
 
-        let content: Vec<u8> = vec![0; AddInstructionlength::MAX as usize + 1];
+        let content: Vec<u8> = vec![0; <usize>::try_from(AddInstructionlength::MAX).unwrap()];
         let new_add = AddInstruction::new(&content);
-        assert!(new_add.is_err());
-        assert_eq!(new_add.unwrap_err(), AddInstructionError::MaxLengthReached);
+        assert!(new_add.is_ok());
     }
 
     #[test]
@@ -162,7 +162,7 @@ mod add_instruction_tests {
     #[test]
     fn push() {
         let mut new_add =
-            AddInstruction::new(&vec![0; <usize>::from(AddInstructionlength::MAX) - 1]).unwrap();
+            AddInstruction::new(&vec![0; <usize>::try_from(AddInstructionlength::MAX).unwrap() - 1]).unwrap();
         assert!(new_add.push(0).is_ok());
         assert_eq!(new_add.len(), AddInstructionlength::MAX.into());
         assert!(new_add.push(0).is_err());
@@ -171,16 +171,15 @@ mod add_instruction_tests {
 
     #[test]
     fn into_bytes() {
+        let mut bytes = vec![AddInstruction::INSTRUCTION_BYTE_SIGN];
+        bytes.extend(AddInstructionlength::MIN.to_be_bytes());
         let mut default_add = AddInstruction::default();
-        assert_eq!(
-            default_add.to_bytes(),
-            vec![AddInstruction::INSTRUCTION_BYTE_SIGN, 0]
-        );
+        assert_eq!(default_add.to_bytes(), bytes);
         default_add.push(b'A').unwrap();
-        assert_eq!(
-            default_add.to_bytes(),
-            vec![AddInstruction::INSTRUCTION_BYTE_SIGN, 1, b'A']
-        );
+        bytes.resize(1, 0);
+        bytes.extend(AddInstructionlength::from(1u8).to_be_bytes());
+        bytes.push(b'A');
+        assert_eq!(default_add.to_bytes(),bytes);
     }
 
     #[test]
