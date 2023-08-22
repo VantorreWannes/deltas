@@ -83,7 +83,9 @@ impl InstructionBytes for AddInstruction {
             .try_into()
             .unwrap();
 
-        let length = AddInstructionlength::from_be_bytes(number_bytes).try_into().unwrap();
+        let length = AddInstructionlength::from_be_bytes(number_bytes)
+            .try_into()
+            .unwrap();
         let content: Vec<u8> = bytes.take(length).copied().collect();
         if content.len() < length {
             return Err(AddInstructionError::MissingByteContent(
@@ -161,8 +163,13 @@ mod add_instruction_tests {
 
     #[test]
     fn push() {
-        let mut new_add =
-            AddInstruction::new(&vec![0; <usize>::try_from(AddInstructionlength::MAX).unwrap() - 1]).unwrap();
+        let mut new_add = AddInstruction::new(&vec![
+            0;
+            <usize>::try_from(AddInstructionlength::MAX)
+                .unwrap()
+                - 1
+        ])
+        .unwrap();
         assert!(new_add.push(0).is_ok());
         assert_eq!(new_add.len(), AddInstructionlength::MAX.into());
         assert!(new_add.push(0).is_err());
@@ -179,7 +186,7 @@ mod add_instruction_tests {
         bytes.resize(1, 0);
         bytes.extend(AddInstructionlength::from(1u8).to_be_bytes());
         bytes.push(b'A');
-        assert_eq!(default_add.to_bytes(),bytes);
+        assert_eq!(default_add.to_bytes(), bytes);
     }
 
     #[test]

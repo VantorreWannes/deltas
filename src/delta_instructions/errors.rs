@@ -1,9 +1,13 @@
-use std::{error::Error, fmt::{Display, Formatter}};
+use std::{
+    error::Error,
+    fmt::{Display, Formatter},
+};
 
 use super::{
     add_instruction::{AddInstruction, AddInstructionlength},
+    copy_instruction::{CopyInstruction, CopyInstructionlength},
     remove_instruction::{RemoveInstruction, RemoveInstructionlength},
-    traits::InstructionBytes, copy_instruction::{CopyInstructionlength, CopyInstruction},
+    traits::InstructionBytes,
 };
 
 #[derive(Debug, PartialEq)]
@@ -133,7 +137,6 @@ impl From<RemoveInstructionError> for InstructionError {
     }
 }
 
-
 #[derive(Debug, PartialEq)]
 pub enum CopyInstructionError {
     MaxLengthReached,
@@ -141,7 +144,7 @@ pub enum CopyInstructionError {
     InvalidLengthBytes(Option<usize>),
 }
 
-impl Display for CopyInstructionError  {
+impl Display for CopyInstructionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             CopyInstructionError::MaxLengthReached => write!(f, "Can't fill this delta instruction type past {} values. Try creating a new instruction instead.", CopyInstructionlength::MAX),
@@ -165,12 +168,10 @@ impl From<CopyInstructionError> for InstructionError {
             CopyInstructionError::MaxLengthReached => {
                 InstructionError::MaxLengthReached(CopyInstructionlength::MAX.try_into().unwrap())
             }
-            CopyInstructionError::InvalidSignByte(found_sign) => {
-                InstructionError::InvalidSignByte(
-                    found_sign,
-                    CopyInstruction::INSTRUCTION_BYTE_SIGN,
-                )
-            }
+            CopyInstructionError::InvalidSignByte(found_sign) => InstructionError::InvalidSignByte(
+                found_sign,
+                CopyInstruction::INSTRUCTION_BYTE_SIGN,
+            ),
             CopyInstructionError::InvalidLengthBytes(found_number_length) => {
                 InstructionError::InvalidLengthBytes(
                     found_number_length,
@@ -180,7 +181,6 @@ impl From<CopyInstructionError> for InstructionError {
         }
     }
 }
-
 
 #[cfg(test)]
 mod instruction_error_tests {
@@ -218,7 +218,10 @@ mod instruction_error_tests {
         );
         assert_eq!(
             InstructionError::from(RemoveInstructionError::InvalidLengthBytes(None)),
-            InstructionError::InvalidLengthBytes(None, std::mem::size_of::<RemoveInstructionlength>())
+            InstructionError::InvalidLengthBytes(
+                None,
+                std::mem::size_of::<RemoveInstructionlength>()
+            )
         );
     }
 
@@ -234,7 +237,10 @@ mod instruction_error_tests {
         );
         assert_eq!(
             InstructionError::from(CopyInstructionError::InvalidLengthBytes(None)),
-            InstructionError::InvalidLengthBytes(None, std::mem::size_of::<CopyInstructionlength>())
+            InstructionError::InvalidLengthBytes(
+                None,
+                std::mem::size_of::<CopyInstructionlength>()
+            )
         );
     }
 }

@@ -1,6 +1,9 @@
 use std::{mem, slice::Iter};
 
-use super::{traits::{PushToInstruction, InstructionBytes}, errors::CopyInstructionError};
+use super::{
+    errors::CopyInstructionError,
+    traits::{InstructionBytes, PushToInstruction},
+};
 
 pub type CopyInstructionlength = u8;
 
@@ -9,10 +12,11 @@ pub struct CopyInstruction {
     length: CopyInstructionlength,
 }
 
-
 impl CopyInstruction {
     pub fn new(length: impl Into<CopyInstructionlength>) -> CopyInstruction {
-        Self { length: length.into() }
+        Self {
+            length: length.into(),
+        }
     }
 
     pub fn len(&self) -> CopyInstructionlength {
@@ -28,13 +32,15 @@ impl PushToInstruction for CopyInstruction {
     type Error = CopyInstructionError;
 
     fn push(&mut self, _: u8) -> Result<(), Self::Error> {
-        self.length = self.length.checked_add(1).ok_or(CopyInstructionError::MaxLengthReached)?;
+        self.length = self
+            .length
+            .checked_add(1)
+            .ok_or(CopyInstructionError::MaxLengthReached)?;
         Ok(())
     }
 }
 
 impl InstructionBytes for CopyInstruction {
-    
     type Error = CopyInstructionError;
     const INSTRUCTION_BYTE_SIGN: u8 = b'|';
     const NUMBER_BYTES_LENGTH: usize = mem::size_of::<CopyInstructionlength>();
@@ -48,31 +54,33 @@ impl InstructionBytes for CopyInstruction {
 
     fn from_bytes(bytes: &mut std::slice::Iter<u8>) -> Result<Self, Self::Error>
     where
-        Self: Sized {
-            match bytes.next() {
-                Some(&Self::INSTRUCTION_BYTE_SIGN) => Ok(()),
-                Some(byte) => Err(CopyInstructionError::InvalidSignByte(Some(*byte))),
-                None => Err(CopyInstructionError::InvalidSignByte(None)),
-            }?;
-    
-            match bytes.size_hint().0 {
-                0 => Err(CopyInstructionError::InvalidLengthBytes(None)),
-                number_bytes_length if number_bytes_length < Self::NUMBER_BYTES_LENGTH => Err(CopyInstructionError::InvalidLengthBytes(Some(number_bytes_length))),
-                number_bytes_length => Ok(number_bytes_length),
-            }?;
-    
-            let number_bytes: [u8; Self::NUMBER_BYTES_LENGTH] = bytes
-                .take(Self::NUMBER_BYTES_LENGTH)
-                .copied()
-                .collect::<Vec<u8>>()
-                .try_into()
-                .unwrap();
-    
-            let length = CopyInstructionlength::from_be_bytes(number_bytes);
-            Ok(Self::new(length))
+        Self: Sized,
+    {
+        match bytes.next() {
+            Some(&Self::INSTRUCTION_BYTE_SIGN) => Ok(()),
+            Some(byte) => Err(CopyInstructionError::InvalidSignByte(Some(*byte))),
+            None => Err(CopyInstructionError::InvalidSignByte(None)),
+        }?;
+
+        match bytes.size_hint().0 {
+            0 => Err(CopyInstructionError::InvalidLengthBytes(None)),
+            number_bytes_length if number_bytes_length < Self::NUMBER_BYTES_LENGTH => Err(
+                CopyInstructionError::InvalidLengthBytes(Some(number_bytes_length)),
+            ),
+            number_bytes_length => Ok(number_bytes_length),
+        }?;
+
+        let number_bytes: [u8; Self::NUMBER_BYTES_LENGTH] = bytes
+            .take(Self::NUMBER_BYTES_LENGTH)
+            .copied()
+            .collect::<Vec<u8>>()
+            .try_into()
+            .unwrap();
+
+        let length = CopyInstructionlength::from_be_bytes(number_bytes);
+        Ok(Self::new(length))
     }
 }
-
 
 impl From<&CopyInstruction> for Vec<u8> {
     fn from(value: &CopyInstruction) -> Self {
@@ -90,7 +98,7 @@ impl TryFrom<&mut Iter<'_, u8>> for CopyInstruction {
     type Error = CopyInstructionError;
 
     fn try_from(value: &mut Iter<'_, u8>) -> Result<Self, Self::Error> {
-       CopyInstruction::from_bytes(value)
+        CopyInstruction::from_bytes(value)
     }
 }
 
@@ -101,7 +109,6 @@ impl TryFrom<Iter<'_, u8>> for CopyInstruction {
         CopyInstruction::from_bytes(&mut value)
     }
 }
-
 
 #[cfg(test)]
 mod copy_instruction_tests {
@@ -138,9 +145,15 @@ mod copy_instruction_tests {
     fn push() {
         let mut new_copy = CopyInstruction::new(CopyInstructionlength::MAX - 1);
         assert!(new_copy.push(0).is_ok());
-        assert_eq!(new_copy.len(), CopyInstructionlength::MAX.try_into().unwrap());
+        assert_eq!(
+            new_copy.len(),
+            CopyInstructionlength::MAX.try_into().unwrap()
+        );
         assert!(new_copy.push(0).is_err());
-        assert_eq!(new_copy.len(), CopyInstructionlength::MAX.try_into().unwrap());
+        assert_eq!(
+            new_copy.len(),
+            CopyInstructionlength::MAX.try_into().unwrap()
+        );
     }
 
     #[test]
@@ -152,7 +165,7 @@ mod copy_instruction_tests {
         default_add.push(b'A').unwrap();
         bytes.resize(1, 0);
         bytes.extend(CopyInstructionlength::from(1u8).to_be_bytes());
-        assert_eq!(default_add.to_bytes(),bytes);
+        assert_eq!(default_add.to_bytes(), bytes);
     }
 
     #[test]
