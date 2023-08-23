@@ -33,6 +33,13 @@ impl DeltaInstruction {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        match self {
+            DeltaInstruction::Add { content } => content.is_empty(),
+            DeltaInstruction::Remove { length } | DeltaInstruction::Copy { length } => *length == 0,
+        }
+    }
+
     pub fn push(&mut self, byte: &u8) -> Result<(), InstructionError> {
         match self {
             DeltaInstruction::Add { content } => {
