@@ -1,4 +1,6 @@
-use std::{mem, slice::Iter};
+use std::{mem, slice::Iter, ops::Deref};
+
+use crate::{delta_instruction_traits::ApplyDeltaTo, delta_patch_error::PatchError};
 
 use super::{
     delta_instruction_error::{InstructionConvertBetweenBytesError, InstructionError},
@@ -17,7 +19,7 @@ pub const ADD_INSTRUCTION_LENGTH_BYTE_LENGTH: usize = mem::size_of::<AddInstruct
 pub const REMOVE_INSTRUCTION_LENGTH_BYTE_LENGTH: usize = mem::size_of::<RemoveInstructionLength>();
 pub const COPY_INSTRUCTION_LENGTH_BYTE_LENGTH: usize = mem::size_of::<CopyInstructionLength>();
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum DeltaInstruction {
     Add { content: Vec<u8> },
     Remove { length: RemoveInstructionLength },
@@ -60,6 +62,9 @@ impl DeltaInstruction {
 }
 
 impl ConvertBetweenBytes for DeltaInstruction {
+
+    type Error = InstructionConvertBetweenBytesError;
+
     fn to_bytes(&self) -> Vec<u8> {
         match self {
             DeltaInstruction::Add { content } => {
@@ -94,7 +99,7 @@ impl ConvertBetweenBytes for DeltaInstruction {
         }
     }
 
-    fn try_from_bytes(bytes: &mut Iter<u8>) -> Result<Self, InstructionConvertBetweenBytesError>
+    fn try_from_bytes(bytes: &mut Iter<u8>) -> Result<Self, Self::Error>
     where
         Self: Sized,
     {
@@ -115,7 +120,7 @@ impl ConvertBetweenBytes for DeltaInstruction {
                     .copied()
                     .collect::<Vec<u8>>();
                 if content.len() != length.try_into().unwrap() {
-                    return Err(InstructionConvertBetweenBytesError::IncorrrectContentLength);
+                    return Err(InstructionConvertBetweenBytesError::IncorrrectContentLength.into());
                 }
                 Ok(DeltaInstruction::Add { content })
             }
@@ -145,8 +150,8 @@ impl ConvertBetweenBytes for DeltaInstruction {
                 let length = <CopyInstructionLength>::from_be_bytes(length_bytes);
                 Ok(DeltaInstruction::Copy { length })
             }
-            Some(_) => Err(InstructionConvertBetweenBytesError::InvalidSign),
-            None => Err(InstructionConvertBetweenBytesError::NoSignByteFound),
+            Some(_) => Err(InstructionConvertBetweenBytesError::InvalidSign.into()),
+            None => Err(InstructionConvertBetweenBytesError::NoSignByteFound.into()),
         }
     }
 }
@@ -176,6 +181,14 @@ impl TryFrom<Vec<u8>> for DeltaInstruction {
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         DeltaInstruction::try_from_bytes(&mut value.iter())
+    }
+}
+
+impl ApplyDeltaTo for DeltaInstruction {
+    type Error = PatchError;
+
+    fn apply_to<'a>(&self, source: &'a mut [u8]) -> Result<&'a [u8], Self::Error> {
+        todo!();
     }
 }
 
@@ -348,7 +361,7 @@ mod delta_instruction_tests {
         let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
         assert_eq!(
             from_bytes_instruction.unwrap_err(),
-            InstructionConvertBetweenBytesError::IncorrrectContentLength,
+            InstructionConvertBetweenBytesError::IncorrrectContentLength.into(),
         );
     }
 
@@ -369,7 +382,7 @@ mod delta_instruction_tests {
         let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
         assert_eq!(
             from_bytes_instruction.unwrap_err(),
-            InstructionConvertBetweenBytesError::IncorrectLengthByteAmount,
+            InstructionConvertBetweenBytesError::IncorrectLengthByteAmount.into(),
         );
     }
 
@@ -391,7 +404,7 @@ mod delta_instruction_tests {
         let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
         assert_eq!(
             from_bytes_instruction.unwrap_err(),
-            InstructionConvertBetweenBytesError::IncorrectLengthByteAmount,
+            InstructionConvertBetweenBytesError::IncorrectLengthByteAmount.into(),
         );
     }
 
@@ -400,7 +413,7 @@ mod delta_instruction_tests {
         let from_bytes_instruction = Instruction::try_from_bytes(&mut vec![].iter());
         assert_eq!(
             from_bytes_instruction.unwrap_err(),
-            InstructionConvertBetweenBytesError::NoSignByteFound
+            InstructionConvertBetweenBytesError::NoSignByteFound.into()
         );
     }
 
@@ -415,7 +428,7 @@ mod delta_instruction_tests {
         let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
         assert_eq!(
             from_bytes_instruction.unwrap_err(),
-            InstructionConvertBetweenBytesError::InvalidSign,
+            InstructionConvertBetweenBytesError::InvalidSign.into(),
         );
     }
 }

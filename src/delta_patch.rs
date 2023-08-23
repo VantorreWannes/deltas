@@ -1,10 +1,11 @@
-use std::{iter::Peekable, slice::Iter};
-
-use crate::delta_instruction::RemoveInstructionLength;
-
 use super::delta_instruction::DeltaInstruction;
+use crate::{
+    delta_instruction_traits::{ApplyDeltaTo, ConvertBetweenBytes},
+    delta_patch_error::PatchError,
+};
+use std::{iter::Peekable, slice::Iter, vec::IntoIter};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct DeltaPatch {
     instructions: Vec<DeltaInstruction>,
 }
@@ -173,6 +174,47 @@ impl DeltaPatch {
     }
 }
 
+impl IntoIterator for DeltaPatch {
+    type Item = DeltaInstruction;
+
+    type IntoIter = IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.instructions.into_iter()
+    }
+}
+
+impl ConvertBetweenBytes for DeltaPatch {
+    type Error = PatchError;
+
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut patch_bytes = Vec::with_capacity(self.len() * 2);
+        for instruction in self.instructions.iter() {
+            patch_bytes.extend(instruction.to_bytes());
+        }
+        patch_bytes
+    }
+
+    fn try_from_bytes(bytes: &mut Iter<u8>) -> Result<Self, PatchError>
+    where
+        Self: Sized,
+    {
+        let mut instructions: Vec<DeltaInstruction> = Vec::new();
+        while bytes.len() > 0 {
+            instructions.push(DeltaInstruction::try_from_bytes(bytes)?);
+        }
+        Ok(Self { instructions })
+    }
+}
+
+impl ApplyDeltaTo for DeltaPatch {
+    type Error = PatchError;
+
+    fn apply_to<'a>(&self, source: &'a mut [u8]) -> Result<&'a [u8], Self::Error> {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod delta_patch_tests {
     use crate::delta_instruction::DeltaInstruction;
@@ -259,6 +301,25 @@ mod delta_patch_tests {
                 DeltaInstruction::Copy { length: 3 },
                 DeltaInstruction::Remove { length: 1 },
             ]
+        );
+    }
+
+    #[test]
+    fn iter() {
+        let instructions = vec![
+            DeltaInstruction::Remove { length: 2 },
+            DeltaInstruction::Add {
+                content: vec![66u8, 66u8, 66u8],
+            },
+            DeltaInstruction::Copy { length: 3 },
+            DeltaInstruction::Remove { length: 1 },
+        ];
+        let source = b"AAXCCC";
+        let target = b"BBBXCC";
+        let delta_patch = DeltaPatch::new(source, target);
+        assert_eq!(
+            delta_patch.into_iter().collect::<Vec<DeltaInstruction>>(),
+            instructions.into_iter().collect::<Vec<DeltaInstruction>>()
         );
     }
 }
