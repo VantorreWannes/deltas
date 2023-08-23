@@ -12,5 +12,5 @@ pub trait ConvertBetweenBytes {
 pub trait ApplyDeltaTo {
     type Error; 
 
-    fn apply_to<'a>(&self, source: &'a mut [u8]) -> Result<&'a [u8], Self::Error>;
+    fn apply_to(&self, source: &mut Iter<u8>) -> Result<Vec<u8>, Self::Error>;
 }
