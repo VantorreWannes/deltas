@@ -51,11 +51,12 @@ mod instruction_error_tests {
     #[test]
     fn into_instruction_bytes_eror() {
         assert_eq!(
-            <InstructionError>::from(InstructionConvertBetweenBytesError::IncorrectLengthByteAmount),
+            <InstructionError>::from(
+                InstructionConvertBetweenBytesError::IncorrectLengthByteAmount
+            ),
             InstructionError::ConvertBetweenBytesError(
                 InstructionConvertBetweenBytesError::IncorrectLengthByteAmount
             )
         );
-
     }
 }
