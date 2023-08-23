@@ -172,3 +172,243 @@ impl TryFrom<Vec<u8>> for DeltaInstruction {
     }
 }
 
+#[cfg(test)]
+mod delta_instruction_tests {
+    use crate::{
+        delta_instruction_error::{InstructionConvertBetweenBytesError, InstructionError},
+        delta_instruction_traits::ConvertBetweenBytes,
+    };
+
+    use super::{
+        AddInstructionLength, CopyInstructionLength, DeltaInstruction, RemoveInstructionLength,
+        ADD_INSTRUCTION_LENGTH_BYTE_LENGTH, ADD_INSTRUCTION_SIGN,
+        COPY_INSTRUCTION_LENGTH_BYTE_LENGTH, COPY_INSTRUCTION_SIGN,
+        REMOVE_INSTRUCTION_LENGTH_BYTE_LENGTH, REMOVE_INSTRUCTION_SIGN,
+    };
+
+    type Instruction = DeltaInstruction;
+
+    #[test]
+    fn len() {
+        let mut min_instruction = Instruction::Add {
+            content: vec![0; AddInstructionLength::MIN.try_into().unwrap()],
+        };
+        let mut max_instruction = Instruction::Add {
+            content: vec![0; AddInstructionLength::MAX.try_into().unwrap()],
+        };
+        assert_eq!(
+            min_instruction.len(),
+            AddInstructionLength::MIN.try_into().unwrap()
+        );
+        assert_eq!(
+            max_instruction.len(),
+            AddInstructionLength::MAX.try_into().unwrap()
+        );
+
+        min_instruction = Instruction::Remove {
+            length: RemoveInstructionLength::MIN.try_into().unwrap(),
+        };
+        max_instruction = Instruction::Remove {
+            length: RemoveInstructionLength::MAX.try_into().unwrap(),
+        };
+        assert_eq!(
+            min_instruction.len(),
+            RemoveInstructionLength::MIN.try_into().unwrap()
+        );
+        assert_eq!(
+            max_instruction.len(),
+            RemoveInstructionLength::MAX.try_into().unwrap()
+        );
+        assert_eq!(
+            min_instruction.len(),
+            CopyInstructionLength::MIN.try_into().unwrap()
+        );
+        assert_eq!(
+            max_instruction.len(),
+            CopyInstructionLength::MAX.try_into().unwrap()
+        );
+    }
+
+    #[test]
+    fn push() {
+        let mut instruction = Instruction::Add {
+            content: vec![0; <usize>::try_from(AddInstructionLength::MAX).unwrap() - 1],
+        };
+        assert!(instruction.push(&b'A').is_ok());
+        assert_eq!(
+            instruction.push(&b'A').unwrap_err(),
+            InstructionError::MaxLengthReached
+        );
+
+        instruction = Instruction::Remove {
+            length: RemoveInstructionLength::MAX - 1,
+        };
+        assert!(instruction.push(&b'A').is_ok());
+        assert_eq!(
+            instruction.push(&b'A').unwrap_err(),
+            InstructionError::MaxLengthReached
+        );
+
+        instruction = Instruction::Copy {
+            length: CopyInstructionLength::MAX - 1,
+        };
+        assert!(instruction.push(&b'A').is_ok());
+        assert_eq!(
+            instruction.push(&b'A').unwrap_err(),
+            InstructionError::MaxLengthReached
+        );
+    }
+
+    #[test]
+    fn add_instruction_to_bytes() {
+        let instruction_length = AddInstructionLength::MAX;
+        let instruction_content_bytes = vec![0; instruction_length.try_into().unwrap()];
+        let instruction_length_bytes = AddInstructionLength::to_be_bytes(instruction_length);
+        let mut instruction_bytes = Vec::with_capacity(
+            <usize>::try_from(instruction_length).unwrap() + ADD_INSTRUCTION_LENGTH_BYTE_LENGTH + 1,
+        );
+        instruction_bytes.push(ADD_INSTRUCTION_SIGN);
+        instruction_bytes.extend(instruction_length_bytes);
+        instruction_bytes.extend(instruction_content_bytes.iter());
+        let instruction = Instruction::Add {
+            content: instruction_content_bytes,
+        };
+        assert_eq!(instruction.to_bytes(), instruction_bytes);
+    }
+
+    #[test]
+    fn remove_instruction_to_bytes() {
+        let instruction_length = RemoveInstructionLength::MAX;
+        let instruction_length_bytes =
+            RemoveInstructionLength::to_be_bytes(instruction_length.clone());
+        let mut instruction_bytes = Vec::with_capacity(REMOVE_INSTRUCTION_LENGTH_BYTE_LENGTH + 1);
+        instruction_bytes.push(REMOVE_INSTRUCTION_SIGN);
+        instruction_bytes.extend(instruction_length_bytes);
+        let instruction = Instruction::Remove {
+            length: instruction_length,
+        };
+        assert_eq!(instruction.to_bytes(), instruction_bytes);
+    }
+
+    #[test]
+    fn copy_instruction_to_bytes() {
+        let instruction_length = CopyInstructionLength::MAX;
+        let instruction_length_bytes =
+            CopyInstructionLength::to_be_bytes(instruction_length.clone());
+        let mut instruction_bytes = Vec::with_capacity(COPY_INSTRUCTION_LENGTH_BYTE_LENGTH + 1);
+        instruction_bytes.push(COPY_INSTRUCTION_SIGN);
+        instruction_bytes.extend(instruction_length_bytes);
+        let instruction = Instruction::Copy {
+            length: instruction_length,
+        };
+        assert_eq!(instruction.to_bytes(), instruction_bytes);
+    }
+
+    #[test]
+    fn add_instruction_from_bytes_ok() {
+        let instruction = Instruction::Add {
+            content: vec![0; AddInstructionLength::MAX.try_into().unwrap()],
+        };
+        let instruction_bytes = instruction.to_bytes();
+        let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
+        assert!(from_bytes_instruction.is_ok());
+        assert_eq!(from_bytes_instruction.unwrap(), instruction);
+    }
+
+    #[test]
+    fn add_instruction_from_bytes_incorrect_length_byte_amount_err() {
+        let instruction = Instruction::Add {
+            content: vec![0; AddInstructionLength::MAX.try_into().unwrap()],
+        };
+        let mut instruction_bytes = instruction.to_bytes();
+        instruction_bytes.drain(1..ADD_INSTRUCTION_LENGTH_BYTE_LENGTH + 1);
+        instruction_bytes.insert(1, 0);
+        let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
+        assert!(from_bytes_instruction.is_ok());
+        assert_eq!(
+            from_bytes_instruction.unwrap(),
+            Instruction::Add { content: vec![] }
+        );
+    }
+
+    #[test]
+    fn add_instruction_from_bytes_incorrect_content_length_err() {
+        let instruction = Instruction::Add {
+            content: vec![0; AddInstructionLength::MAX.try_into().unwrap()],
+        };
+        let mut instruction_bytes = instruction.to_bytes();
+        instruction_bytes.pop();
+        let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
+        assert_eq!(
+            from_bytes_instruction.unwrap_err(),
+            InstructionConvertBetweenBytesError::IncorrrectContentLength,
+        );
+    }
+
+    #[test]
+    fn remove_instruction_from_bytes_ok() {
+        let instruction = Instruction::Remove {
+            length: RemoveInstructionLength::MAX.try_into().unwrap(),
+        };
+        let instruction_bytes = instruction.to_bytes();
+        let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
+        assert!(from_bytes_instruction.is_ok());
+        assert_eq!(from_bytes_instruction.unwrap(), instruction);
+    }
+
+    #[test]
+    fn remove_instruction_from_bytes_incorrect_length_byte_amount_err() {
+        let instruction_bytes = vec![REMOVE_INSTRUCTION_SIGN];
+        let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
+        assert_eq!(
+            from_bytes_instruction.unwrap_err(),
+            InstructionConvertBetweenBytesError::IncorrectLengthByteAmount,
+        );
+    }
+
+    #[test]
+    fn copy_instruction_from_bytes_ok() {
+        let instruction = Instruction::Copy {
+            length: CopyInstructionLength::MAX.try_into().unwrap(),
+        };
+        let instruction_bytes = instruction.to_bytes();
+        let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
+        dbg!(&from_bytes_instruction);
+        assert!(from_bytes_instruction.is_ok());
+        assert_eq!(from_bytes_instruction.unwrap(), instruction);
+    }
+
+    #[test]
+    fn copy_instruction_from_bytes_incorrect_length_byte_amount_err() {
+        let instruction_bytes = vec![COPY_INSTRUCTION_SIGN];
+        let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
+        assert_eq!(
+            from_bytes_instruction.unwrap_err(),
+            InstructionConvertBetweenBytesError::IncorrectLengthByteAmount,
+        );
+    }
+
+    #[test]
+    fn instruction_from_bytes_no_sign_err() {
+        let from_bytes_instruction = Instruction::try_from_bytes(&mut vec![].iter());
+        assert_eq!(
+            from_bytes_instruction.unwrap_err(),
+            InstructionConvertBetweenBytesError::NoSignByteFound
+        );
+    }
+
+    #[test]
+    fn instruction_from_bytes_invalid_sign_err() {
+        let instruction = Instruction::Add {
+            content: vec![0; AddInstructionLength::MAX.try_into().unwrap()],
+        };
+        let mut instruction_bytes = instruction.to_bytes();
+        instruction_bytes.remove(0);
+        instruction_bytes.insert(0, 0);
+        let from_bytes_instruction = Instruction::try_from_bytes(&mut instruction_bytes.iter());
+        assert_eq!(
+            from_bytes_instruction.unwrap_err(),
+            InstructionConvertBetweenBytesError::InvalidSign,
+        );
+    }
+}
