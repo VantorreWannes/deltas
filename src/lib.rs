@@ -1,3 +1,4 @@
+pub mod delta_instruction_traits;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
