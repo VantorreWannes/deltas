@@ -173,6 +173,84 @@ impl DeltaPatch {
     }
 }
 
+#[cfg(test)]
+mod delta_patch_tests {
+    use crate::delta_instruction::DeltaInstruction;
+
+    use super::DeltaPatch;
+
+    #[test]
+    fn construct_remove_instruction() {
+        let source = b"AAAX";
+        let target = b"BBBX";
+        let lcs = DeltaPatch::lcs(source, target);
+        assert_eq!(
+            DeltaPatch::construct_remove_instruction(
+                &mut source.iter().peekable(),
+                &mut lcs.iter().peekable()
+            ),
+            DeltaInstruction::Remove { length: 3 }
+        );
+    }
+
+    #[test]
+    fn construct_add_instruction() {
+        let source = b"AAAX";
+        let target = b"BBBX";
+        let lcs = DeltaPatch::lcs(source, target);
+        assert_eq!(
+            DeltaPatch::construct_add_instruction(
+                &mut target.iter().peekable(),
+                &mut lcs.iter().peekable()
+            ),
+            DeltaInstruction::Add {
+                content: vec![b'B', b'B', b'B']
+            }
+        );
+    }
+
+    #[test]
+    fn construct_copy_instruction() {
+        let source = b"AAA";
+        let target = b"AAA";
+        let lcs = DeltaPatch::lcs(source, target);
+        assert_eq!(
+            DeltaPatch::construct_copy_instruction(
+                &mut source.iter().peekable(),
+                &mut target.iter().peekable(),
+                &mut lcs.iter().peekable()
+            ),
+            DeltaInstruction::Copy { length: 3 }
+        );
+    }
+
+    #[test]
+    fn soft_construct_remove_instruction() {
+        let source = b"AAA";
+        assert_eq!(
+            DeltaPatch::soft_construct_remove_instruction(&mut source.iter().peekable()),
+            DeltaInstruction::Remove { length: 3 }
+        );
+    }
+
+    #[test]
+    fn soft_construct_add_instruction() {
+        let target = b"BBB";
+        assert_eq!(
+            DeltaPatch::soft_construct_add_instruction(&mut target.iter().peekable()),
+            DeltaInstruction::Add {
+                content: vec![b'B', b'B', b'B']
+            }
+        );
+    }
+
+    #[test]
+    fn construct_instructions() {
+        let source = b"AAXCCC";
+        let target = b"BBBXCC";
+        let lcs = DeltaPatch::lcs(source, target);
+        assert_eq!(
+            DeltaPatch::construct_instructions(source, target, lcs),
             vec![
                 DeltaInstruction::Remove { length: 2 },
                 DeltaInstruction::Add {
