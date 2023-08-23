@@ -1,10 +1,10 @@
 use std::slice::Iter;
-use crate::delta_instruction_error::DeltaInstructionBytesError;
+use crate::delta_instruction_error::InstructionConvertBetweenBytesError;
 
 
 
 pub trait ConvertBetweenBytes{
 
      fn to_bytes(&self) -> Vec<u8>;
-     fn try_from_bytes(bytes: &mut Iter<u8>) -> Result<Self, DeltaInstructionBytesError> where Self: Sized;
+     fn try_from_bytes(bytes: &mut Iter<u8>) -> Result<Self, InstructionConvertBetweenBytesError> where Self: Sized;
 }
