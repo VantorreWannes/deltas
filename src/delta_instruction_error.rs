@@ -47,7 +47,6 @@ impl From<InstructionFromBytesError> for InstructionError {
     }
 }
 
-
 #[derive(Debug, PartialEq)]
 pub enum ApplyToError {
     InvalidSourceLength,
@@ -56,7 +55,10 @@ pub enum ApplyToError {
 impl Display for ApplyToError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ApplyToError::InvalidSourceLength => write!(f, "Source Iterator ended before DeltaInstruction could extract the needed bytes."),
+            ApplyToError::InvalidSourceLength => write!(
+                f,
+                "Source Iterator ended before DeltaInstruction could extract the needed bytes."
+            ),
         }
     }
 }
@@ -65,4 +67,3 @@ impl Error for ApplyToError {}
 
 #[cfg(test)]
 mod instruction_error_tests {}
-
