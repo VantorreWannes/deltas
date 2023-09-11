@@ -1,10 +1,12 @@
 use std::slice::Iter;
 
-use crate::{delta_instruction_error::ApplyToError, delta_instruction_traits::ApplyDeltaTo};
+use crate::{
+    delta_instruction_error::ApplyToError, delta_patch::InstructionItem, delta_traits::ApplyDeltaTo,
+};
 
 use super::{
     delta_instruction_error::{InstructionError, InstructionFromBytesError},
-    delta_instruction_traits::ConvertBetweenBytes,
+    delta_traits::ConvertBetweenBytes,
 };
 
 pub const ADD_INSTRUCTION_SIGN: u8 = b'+';
@@ -51,6 +53,17 @@ impl Instruction {
                 *length += 1u8;
                 Ok(())
             }
+        }
+    }
+
+    pub fn push_instruction_item(
+        &mut self,
+        instruction_item: &InstructionItem,
+    ) -> Result<(), InstructionError> {
+        match instruction_item {
+            InstructionItem::Add(byte) => self.push(byte),
+            InstructionItem::Remove => self.push(&b'A'),
+            InstructionItem::Copy => self.push(&b'A'),
         }
     }
 }
@@ -169,12 +182,22 @@ impl ApplyDeltaTo for Instruction {
     }
 }
 
+impl From<&InstructionItem> for Instruction {
+    fn from(value: &InstructionItem) -> Self {
+        match value {
+            InstructionItem::Add(byte) => Instruction::Add { content: vec![*byte] },
+            InstructionItem::Remove => Instruction::Remove { length: 1 },
+            InstructionItem::Copy => Instruction::Copy { length: 1 },
+        }
+    }
+}
+
 #[cfg(test)]
 mod delta_instruction_tests {
     use crate::{
         delta_instruction::{ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN},
         delta_instruction_error::InstructionFromBytesError,
-        delta_instruction_traits::{ConvertBetweenBytes, ApplyDeltaTo},
+        delta_traits::{ApplyDeltaTo, ConvertBetweenBytes},
     };
 
     use super::Instruction;
@@ -263,38 +286,55 @@ mod delta_instruction_tests {
     fn from_bytes_no_sign_found_err() {
         let from_bytes_instruction = Instruction::try_from_bytes(&mut vec![].iter());
         assert!(from_bytes_instruction.is_err());
-        assert_eq!(from_bytes_instruction.unwrap_err(), InstructionFromBytesError::NoSignFound);
+        assert_eq!(
+            from_bytes_instruction.unwrap_err(),
+            InstructionFromBytesError::NoSignFound
+        );
     }
 
     #[test]
     fn from_bytes_invalid_sign_err() {
         let from_bytes_instruction = Instruction::try_from_bytes(&mut vec![b'A'].iter());
         assert!(from_bytes_instruction.is_err());
-        assert_eq!(from_bytes_instruction.unwrap_err(), InstructionFromBytesError::InvalidSign);
+        assert_eq!(
+            from_bytes_instruction.unwrap_err(),
+            InstructionFromBytesError::InvalidSign
+        );
     }
 
     #[test]
     fn from_bytes_no_length_found_err() {
-        let from_bytes_instruction = Instruction::try_from_bytes(&mut vec![ADD_INSTRUCTION_SIGN].iter());
+        let from_bytes_instruction =
+            Instruction::try_from_bytes(&mut vec![ADD_INSTRUCTION_SIGN].iter());
         assert!(from_bytes_instruction.is_err());
-        assert_eq!(from_bytes_instruction.unwrap_err(), InstructionFromBytesError::NoLengthFound);
+        assert_eq!(
+            from_bytes_instruction.unwrap_err(),
+            InstructionFromBytesError::NoLengthFound
+        );
     }
 
     #[test]
     fn from_bytes_invalid_length_err() {
-        let from_bytes_instruction = Instruction::try_from_bytes(&mut vec![ADD_INSTRUCTION_SIGN, 10, b'A'].iter());
+        let from_bytes_instruction =
+            Instruction::try_from_bytes(&mut vec![ADD_INSTRUCTION_SIGN, 10, b'A'].iter());
         assert!(from_bytes_instruction.is_err());
-        assert_eq!(from_bytes_instruction.unwrap_err(), InstructionFromBytesError::InvalidLength);
+        assert_eq!(
+            from_bytes_instruction.unwrap_err(),
+            InstructionFromBytesError::InvalidLength
+        );
     }
 
     #[test]
     fn apply_to() {
-        let add_instruction = Instruction::Add { content: vec![b'A'; u8::MAX.into()] };
+        let add_instruction = Instruction::Add {
+            content: vec![b'A'; u8::MAX.into()],
+        };
         let add_applied_bytes = add_instruction.apply_to(&mut vec![].iter());
 
         let remove_instruction = Instruction::Remove { length: u8::MAX };
-        let remove_applied_bytes = remove_instruction.apply_to(&mut vec![b'A'; u8::MAX.into()].iter());
-        
+        let remove_applied_bytes =
+            remove_instruction.apply_to(&mut vec![b'A'; u8::MAX.into()].iter());
+
         let copy_instruction = Instruction::Copy { length: u8::MAX };
         let copy_applied_bytes = copy_instruction.apply_to(&mut vec![b'A'; u8::MAX.into()].iter());
 
