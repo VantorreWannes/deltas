@@ -1,3 +1,6 @@
+use crate::instruction_error::InstructionError;
+
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
     Remove { length: u8 },
@@ -19,5 +22,9 @@ impl Instruction {
 
     pub fn is_full(&self) -> bool {
         self.len() == u8::MAX
+    }
+
+    pub fn push(&mut self, byte: u8) -> Result<(), InstructionError> {
+        
     }
 }
