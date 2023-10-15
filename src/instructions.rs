@@ -2,6 +2,10 @@ use crate::instruction_error::{InstructionError, Result};
 
 pub const MAX_INSTRUCTION_LENGTH: u8 = u8::MAX;
 
+const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
+const ADD_INSTRUCTION_SIGN: u8 = b'+';
+const COPY_INSTRUCTION_SIGN: u8 = b'|';
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
     Remove { length: u8 },
@@ -35,14 +39,37 @@ impl Instruction {
         }
         Ok(())
     }
+
+    fn sign(&self) -> u8 {
+        match self {
+            Instruction::Remove { .. } => REMOVE_INSTRUCTION_SIGN,
+            Instruction::Add { .. } => ADD_INSTRUCTION_SIGN,
+            Instruction::Copy { .. } => COPY_INSTRUCTION_SIGN,
+        }
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            Instruction::Remove { length } => {
+                vec![REMOVE_INSTRUCTION_SIGN, *length]
+            },
+            Instruction::Add { content } | Instruction::Copy { content }  => {
+                let mut bytes = vec![self.sign(), content.len() as u8];
+                bytes.extend(content);
+                bytes
+            },
+        }
+    }
 }
 
 impl From<&Instruction> for Vec<u8> {
     fn from(value: &Instruction) -> Self {
-        match value {
-            Instruction::Remove { length } => todo!(),
-            Instruction::Add { content } => todo!(),
-            Instruction::Copy { content } => todo!(),
-        }
+        value.to_bytes()
+    }
+}
+
+impl From<Instruction> for Vec<u8> {
+    fn from(value: Instruction) -> Self {
+        value.to_bytes()
     }
 }
