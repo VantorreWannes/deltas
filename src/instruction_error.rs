@@ -9,6 +9,8 @@ pub enum InstructionError {
     ContentOverflow,
     MissingSign,
     InvalidSign,
+    MissingLength,
+    MissingContent,
 }
 
 impl Display for InstructionError {
@@ -18,7 +20,7 @@ impl Display for InstructionError {
                 write!(f, "Content length cannot exceed {} bytes.", u8::MAX)
             }
             InstructionError::MissingSign => {
-                write!(f, "Missing instruction sign.")
+                write!(f, "Missing instruction sign byte.")
             }
             InstructionError::InvalidSign => {
                 write!(
@@ -27,6 +29,12 @@ impl Display for InstructionError {
                     REMOVE_INSTRUCTION_SIGN, ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN
                 )
             }
+            InstructionError::MissingLength => {
+                write!(f, "Missing instruction length byte.")
+            },
+            InstructionError::MissingContent => {
+                write!(f, "Missing instruction content.")
+            },
         }
     }
 }

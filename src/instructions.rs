@@ -1,4 +1,4 @@
-use std::{slice::Iter, iter::Peekable};
+use std::{iter::Peekable, slice::Iter};
 
 use crate::instruction_error::{InstructionError, Result};
 
@@ -54,19 +54,39 @@ impl Instruction {
         match self {
             Instruction::Remove { length } => {
                 vec![REMOVE_INSTRUCTION_SIGN, *length]
-            },
-            Instruction::Add { content } | Instruction::Copy { content }  => {
+            }
+            Instruction::Add { content } | Instruction::Copy { content } => {
                 let mut bytes = vec![self.sign(), content.len() as u8];
                 bytes.extend(content);
                 bytes
-            },
+            }
         }
     }
 
-    pub fn from_bytes(bytes: &mut Peekable<Iter<u8>>) -> Result<Self> {
+    pub fn try_from_bytes(bytes: &mut Peekable<Iter<u8>>) -> Result<Self> {
         match bytes.next() {
-            Some(_) => todo!(),
-            None => todo!(),
+            Some(&REMOVE_INSTRUCTION_SIGN) => {
+                let length = *bytes.next().ok_or(InstructionError::MissingLength)?;
+                Ok(Instruction::Remove { length })
+            }
+            Some(&ADD_INSTRUCTION_SIGN) => {
+                let length = *bytes.next().ok_or(InstructionError::MissingLength)? as usize;
+                let content = bytes.take(length).copied().collect::<Vec<u8>>();
+                if content.len() != length {
+                    return Err(InstructionError::MissingContent);
+                }
+                Ok(Instruction::Add { content })
+            }
+            Some(&COPY_INSTRUCTION_SIGN) => {
+                let length = *bytes.next().ok_or(InstructionError::MissingLength)? as usize;
+                let content = bytes.take(length).copied().collect::<Vec<u8>>();
+                if content.len() != length {
+                    return Err(InstructionError::MissingContent);
+                }
+                Ok(Instruction::Copy { content })
+            }
+            Some(_) => Err(InstructionError::InvalidSign),
+            None => Err(InstructionError::MissingSign),
         }
     }
 }
@@ -80,5 +100,21 @@ impl From<&Instruction> for Vec<u8> {
 impl From<Instruction> for Vec<u8> {
     fn from(value: Instruction) -> Self {
         value.to_bytes()
+    }
+}
+
+impl TryFrom<&mut Peekable<Iter<'_, u8>>> for Instruction {
+    type Error = InstructionError;
+
+    fn try_from(value: &mut Peekable<Iter<'_, u8>>) -> std::result::Result<Self, Self::Error> {
+        Instruction::try_from_bytes(value)
+    }
+}
+
+impl TryFrom<Peekable<Iter<'_, u8>>> for Instruction {
+    type Error = InstructionError;
+
+    fn try_from(mut value: Peekable<Iter<'_, u8>>) -> std::result::Result<Self, Self::Error> {
+        Instruction::try_from_bytes(&mut value)
     }
 }
