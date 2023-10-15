@@ -1,4 +1,4 @@
-pub mod directives;
+pub mod instructions;
 
 
 pub fn add(left: usize, right: usize) -> usize {
