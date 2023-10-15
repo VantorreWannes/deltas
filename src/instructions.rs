@@ -16,7 +16,7 @@ impl Instruction {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.len() == u8::MIN
     }
 
     pub fn is_full(&self) -> bool {
