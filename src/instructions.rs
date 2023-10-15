@@ -1,10 +1,12 @@
+use std::{slice::Iter, iter::Peekable};
+
 use crate::instruction_error::{InstructionError, Result};
 
 pub const MAX_INSTRUCTION_LENGTH: u8 = u8::MAX;
 
-const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
-const ADD_INSTRUCTION_SIGN: u8 = b'+';
-const COPY_INSTRUCTION_SIGN: u8 = b'|';
+pub const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
+pub const ADD_INSTRUCTION_SIGN: u8 = b'+';
+pub const COPY_INSTRUCTION_SIGN: u8 = b'|';
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
@@ -58,6 +60,13 @@ impl Instruction {
                 bytes.extend(content);
                 bytes
             },
+        }
+    }
+
+    pub fn from_bytes(bytes: &mut Peekable<Iter<u8>>) -> Result<Self> {
+        match bytes.next() {
+            Some(_) => todo!(),
+            None => todo!(),
         }
     }
 }

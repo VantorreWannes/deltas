@@ -1,10 +1,14 @@
-use std::{fmt::Display, error::Error};
+use std::{error::Error, fmt::Display};
+
+use crate::instructions::{ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN};
 
 pub type Result<T> = std::result::Result<T, InstructionError>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum InstructionError {
     ContentOverflow,
+    MissingSign,
+    InvalidSign,
 }
 
 impl Display for InstructionError {
@@ -12,6 +16,16 @@ impl Display for InstructionError {
         match self {
             InstructionError::ContentOverflow => {
                 write!(f, "Content length cannot exceed {} bytes.", u8::MAX)
+            }
+            InstructionError::MissingSign => {
+                write!(f, "Missing instruction sign.")
+            }
+            InstructionError::InvalidSign => {
+                write!(
+                    f,
+                    "Invalid instruction sign. Please use {}, {} or {}",
+                    REMOVE_INSTRUCTION_SIGN, ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN
+                )
             }
         }
     }
