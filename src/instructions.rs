@@ -1,5 +1,4 @@
-use crate::instruction_error::InstructionError;
-
+use crate::instruction_error::{InstructionError, Result};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
@@ -24,7 +23,14 @@ impl Instruction {
         self.len() == u8::MAX
     }
 
-    pub fn push(&mut self, byte: u8) -> Result<(), InstructionError> {
-        
+    pub fn push(&mut self, byte: u8) -> Result<()> {
+        if self.is_full() {
+            return Err(InstructionError::ContentOverflow);
+        }
+        match self {
+            Instruction::Remove { length } => *length += 1,
+            Instruction::Add { content } | Instruction::Copy { content } => content.push(byte),
+        }
+        Ok(())
     }
 }
