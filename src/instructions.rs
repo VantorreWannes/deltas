@@ -148,20 +148,11 @@ mod instructions_tests {
 
     #[test]
     fn is_empty() {
-        let mut max_length_instruction = Instruction::Add {
+        let max_length_instruction = Instruction::Add {
             content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
         };
-        let mut min_length_instruction = Instruction::Add {
+        let min_length_instruction = Instruction::Add {
             content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
-        };
-        assert!(min_length_instruction.is_empty());
-        assert!(!max_length_instruction.is_empty());
-
-        max_length_instruction = Instruction::Remove {
-            length: MAX_INSTRUCTION_LENGTH,
-        };
-        min_length_instruction = Instruction::Remove {
-            length: MIN_INSTRUCTION_LENGTH,
         };
         assert!(min_length_instruction.is_empty());
         assert!(!max_length_instruction.is_empty());
@@ -169,22 +160,31 @@ mod instructions_tests {
 
     #[test]
     fn is_full() {
-        let mut max_length_instruction = Instruction::Add {
+        let max_length_instruction = Instruction::Add {
             content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
         };
-        let mut min_length_instruction = Instruction::Add {
+        let min_length_instruction = Instruction::Add {
             content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
         };
         assert!(!min_length_instruction.is_full());
         assert!(max_length_instruction.is_full());
+    }
 
-        max_length_instruction = Instruction::Remove {
-            length: MAX_INSTRUCTION_LENGTH,
+    #[test]
+    fn push() {
+        let mut instruction = Instruction::Add {
+            content: vec![0; (MAX_INSTRUCTION_LENGTH-1).into()],
         };
-        min_length_instruction = Instruction::Remove {
-            length: MIN_INSTRUCTION_LENGTH,
+        assert!(instruction.push(b'\x00').is_ok());
+        assert!(instruction.is_full());
+        assert!(instruction.push(b'\x00').is_err());
+
+        instruction = Instruction::Remove {
+            length: (MAX_INSTRUCTION_LENGTH-1),
         };
-        assert!(!min_length_instruction.is_full());
-        assert!(max_length_instruction.is_full());
+        assert!(instruction.push(b'\x00').is_ok());
+        assert!(instruction.is_full());
+        assert!(instruction.push(b'\x00').is_err());
+
     }
 }
