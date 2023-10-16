@@ -236,4 +236,24 @@ mod instructions_tests {
         bytes = vec![REMOVE_INSTRUCTION_SIGN, instruction.len()];
         assert_eq!(bytes, instruction.to_bytes());
     }
+
+    #[test]
+    fn add_try_from_bytes_ok() {
+        let mut instruction = Instruction::Add {
+            content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
+        };
+        let mut bytes = instruction.to_bytes();
+        let mut constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
+        assert!(constructed_instruction.is_ok());
+        assert_eq!(instruction, constructed_instruction.unwrap());
+
+        instruction = Instruction::Add {
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+        };
+        bytes = instruction.to_bytes();
+        constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
+        assert!(constructed_instruction.is_ok());
+        assert_eq!(instruction, constructed_instruction.unwrap());
+    }
+
 }
