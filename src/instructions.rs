@@ -189,7 +189,7 @@ mod instructions_tests {
 
     #[test]
     fn sign() {
-        let mut instruction = Instruction::Add {
+        let instruction = Instruction::Add {
             content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
         };
         assert_eq!(instruction.sign(), ADD_INSTRUCTION_SIGN);
@@ -204,4 +204,24 @@ mod instructions_tests {
         };
         assert_eq!(instruction.sign(), COPY_INSTRUCTION_SIGN);
     }
+
+    #[test]
+    fn add_and_copy_to_bytes() {
+        let mut content = vec![0; MAX_INSTRUCTION_LENGTH.into()];
+        let mut instruction = Instruction::Add {
+            content: content.clone(),
+        };
+        let mut bytes = vec![ADD_INSTRUCTION_SIGN, instruction.len()];
+        bytes.extend(content);
+        assert_eq!(bytes, instruction.to_bytes());
+
+        content = vec![0; MIN_INSTRUCTION_LENGTH.into()];
+        instruction = Instruction::Add {
+            content: content.clone(),
+        };
+        bytes = vec![ADD_INSTRUCTION_SIGN, instruction.len()];
+        bytes.extend(content);
+        assert_eq!(bytes, instruction.to_bytes());
+    }
+
 }
