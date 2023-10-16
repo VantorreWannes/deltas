@@ -64,6 +64,29 @@ impl Lcs {
 
         Self { table }
     }
+
+    pub fn length(&self) -> usize {
+        let last_index = self.table.len() - 1;
+        self.table[last_index][last_index]
+    }
 }
 
+#[cfg(test)]
+mod lcs_tests {
+    use super::*;
 
+    #[test]
+    fn new() {
+        let lcs = Lcs::new(&[0, 0, 0],  &[0, 0, 0]);
+        assert_eq!(lcs.table.iter().flatten().sum::<usize>(), 14);
+    }
+
+    #[test]
+    fn length() {
+        let mut lcs = Lcs::new(&[],  &[]);
+        assert_eq!(lcs.length(), 0);
+
+        lcs = Lcs::new(&[0],  &[0]);
+        assert_eq!(lcs.length(), 1);
+    }
+}
