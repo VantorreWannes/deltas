@@ -319,4 +319,22 @@ mod instructions_tests {
         constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
         assert!(constructed_instruction.is_err_and(|err| err == InstructionError::MissingLength));
     }
+
+    #[test]
+    fn try_from_bytes_content_err() {
+        let mut content = vec![ADD_INSTRUCTION_SIGN];
+        content.push(MAX_INSTRUCTION_LENGTH);
+        let mut constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
+        assert!(constructed_instruction.is_err_and(|err| err == InstructionError::MissingContent));
+
+        content = vec![REMOVE_INSTRUCTION_SIGN];
+        content.push(MAX_INSTRUCTION_LENGTH);
+        constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
+        assert!(constructed_instruction.is_ok());
+
+        content = vec![COPY_INSTRUCTION_SIGN];
+        content.push(MAX_INSTRUCTION_LENGTH);
+        constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
+        assert!(constructed_instruction.is_err_and(|err| err == InstructionError::MissingContent));
+    }
 }
