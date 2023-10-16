@@ -3,6 +3,7 @@ use std::{iter::Peekable, slice::Iter};
 use crate::instruction_error::{InstructionError, Result};
 
 pub const MAX_INSTRUCTION_LENGTH: u8 = u8::MAX;
+pub const MIN_INSTRUCTION_LENGTH: u8 = u8::MIN;
 
 pub const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 pub const ADD_INSTRUCTION_SIGN: u8 = b'+';
@@ -24,7 +25,7 @@ impl Instruction {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.len() == u8::MIN
+        self.len() == MIN_INSTRUCTION_LENGTH
     }
 
     pub fn is_full(&self) -> bool {
@@ -116,5 +117,32 @@ impl TryFrom<Peekable<Iter<'_, u8>>> for Instruction {
 
     fn try_from(mut value: Peekable<Iter<'_, u8>>) -> std::result::Result<Self, Self::Error> {
         Instruction::try_from_bytes(&mut value)
+    }
+}
+
+#[cfg(test)]
+
+mod instructions_tests {
+    use super::*;
+
+    #[test]
+    fn len() {
+        let mut max_length_instruction = Instruction::Add {
+            content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
+        };
+        let mut min_length_instruction = Instruction::Add {
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+        };
+        assert_eq!(max_length_instruction.len(), MAX_INSTRUCTION_LENGTH);
+        assert_eq!(min_length_instruction.len(), MIN_INSTRUCTION_LENGTH);
+
+        max_length_instruction = Instruction::Remove {
+            length: MAX_INSTRUCTION_LENGTH,
+        };
+        min_length_instruction = Instruction::Remove {
+            length: MIN_INSTRUCTION_LENGTH,
+        };
+        assert_eq!(max_length_instruction.len(), MAX_INSTRUCTION_LENGTH);
+        assert_eq!(min_length_instruction.len(), MIN_INSTRUCTION_LENGTH);
     }
 }
