@@ -1,4 +1,4 @@
-use crate::instructions::Instruction;
+use crate::{instructions::Instruction, lcs::Lcs};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Patch {
@@ -7,6 +7,22 @@ pub struct Patch {
 
 impl Patch {
     pub fn new(source: &[u8], target: &[u8]) -> Self {
+        let lcs = Lcs::new(source, target).subsequence();
+        let (mut source_index, mut target_index, mut lcs_index) = (0, 0, 0);
+        while source_index < source.len() {
+            if source[source_index] != lcs[lcs_index] {
+                //Removed
+                source_index += 1;
+            } else if target[target_index] != lcs[lcs_index] {
+                //Added
+                target_index += 1;
+            } else {
+                //Copied
+                source_index += 1;
+                target_index += 1;
+                lcs_index += 1;
+            }
+        }
         todo!();
     }
 
@@ -62,12 +78,16 @@ mod patch_tests {
 
         assert_eq!(patch.to_bytes(), instruction.to_bytes());
 
-        instruction = Instruction::Add { content: vec![0; MAX_INSTRUCTION_LENGTH.into()] }; 
+        instruction = Instruction::Add {
+            content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
+        };
         patch.content = vec![instruction.clone()];
 
         assert_eq!(patch.to_bytes(), instruction.to_bytes());
 
-        instruction = Instruction::Copy { content: vec![0; MAX_INSTRUCTION_LENGTH.into()] }; 
+        instruction = Instruction::Copy {
+            content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
+        };
         patch.content = vec![instruction.clone()];
 
         assert_eq!(patch.to_bytes(), instruction.to_bytes());
