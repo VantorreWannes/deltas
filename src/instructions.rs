@@ -145,4 +145,25 @@ mod instructions_tests {
         assert_eq!(max_length_instruction.len(), MAX_INSTRUCTION_LENGTH);
         assert_eq!(min_length_instruction.len(), MIN_INSTRUCTION_LENGTH);
     }
+
+    #[test]
+    fn is_empty() {
+        let mut max_length_instruction = Instruction::Add {
+            content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
+        };
+        let mut min_length_instruction = Instruction::Add {
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+        };
+        assert!(min_length_instruction.is_empty());
+        assert!(!max_length_instruction.is_empty());
+
+        max_length_instruction = Instruction::Remove {
+            length: MAX_INSTRUCTION_LENGTH,
+        };
+        min_length_instruction = Instruction::Remove {
+            length: MIN_INSTRUCTION_LENGTH,
+        };
+        assert!(min_length_instruction.is_empty());
+        assert!(!max_length_instruction.is_empty());
+    }
 }
