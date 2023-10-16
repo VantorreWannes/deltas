@@ -277,16 +277,31 @@ mod instructions_tests {
 
     #[test]
     fn remove_try_from_bytes_ok() {
-        let mut instruction = Instruction::Remove { length: MAX_INSTRUCTION_LENGTH };
+        let mut instruction = Instruction::Remove {
+            length: MAX_INSTRUCTION_LENGTH,
+        };
         let mut bytes = instruction.to_bytes();
         let mut constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
         assert!(constructed_instruction.is_ok());
         assert_eq!(instruction, constructed_instruction.unwrap());
 
-        instruction = Instruction::Remove { length: MIN_INSTRUCTION_LENGTH };
+        instruction = Instruction::Remove {
+            length: MIN_INSTRUCTION_LENGTH,
+        };
         bytes = instruction.to_bytes();
         constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
         assert!(constructed_instruction.is_ok());
         assert_eq!(instruction, constructed_instruction.unwrap());
+    }
+
+    #[test]
+    fn try_from_bytes_sign_err() {
+        let mut content = vec![];
+        let mut constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
+        assert!(constructed_instruction.is_err_and(|err| err == InstructionError::MissingSign));
+
+        content.push(b'\x00');
+        constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
+        assert!(constructed_instruction.is_err_and(|err| err == InstructionError::InvalidSign));
     }
 }
