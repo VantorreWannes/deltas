@@ -256,7 +256,6 @@ mod instructions_tests {
         assert_eq!(instruction, constructed_instruction.unwrap());
     }
 
-
     #[test]
     fn copy_try_from_bytes_ok() {
         let mut instruction = Instruction::Copy {
@@ -276,4 +275,18 @@ mod instructions_tests {
         assert_eq!(instruction, constructed_instruction.unwrap());
     }
 
+    #[test]
+    fn remove_try_from_bytes_ok() {
+        let mut instruction = Instruction::Remove { length: MAX_INSTRUCTION_LENGTH };
+        let mut bytes = instruction.to_bytes();
+        let mut constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
+        assert!(constructed_instruction.is_ok());
+        assert_eq!(instruction, constructed_instruction.unwrap());
+
+        instruction = Instruction::Remove { length: MIN_INSTRUCTION_LENGTH };
+        bytes = instruction.to_bytes();
+        constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
+        assert!(constructed_instruction.is_ok());
+        assert_eq!(instruction, constructed_instruction.unwrap());
+    }
 }
