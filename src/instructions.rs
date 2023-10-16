@@ -256,4 +256,24 @@ mod instructions_tests {
         assert_eq!(instruction, constructed_instruction.unwrap());
     }
 
+
+    #[test]
+    fn copy_try_from_bytes_ok() {
+        let mut instruction = Instruction::Copy {
+            content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
+        };
+        let mut bytes = instruction.to_bytes();
+        let mut constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
+        assert!(constructed_instruction.is_ok());
+        assert_eq!(instruction, constructed_instruction.unwrap());
+
+        instruction = Instruction::Copy {
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+        };
+        bytes = instruction.to_bytes();
+        constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
+        assert!(constructed_instruction.is_ok());
+        assert_eq!(instruction, constructed_instruction.unwrap());
+    }
+
 }
