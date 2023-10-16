@@ -224,4 +224,16 @@ mod instructions_tests {
         assert_eq!(bytes, instruction.to_bytes());
     }
 
+    #[test]
+    fn remove_to_bytes() {
+        let mut length = MAX_INSTRUCTION_LENGTH;
+        let mut instruction = Instruction::Remove { length };
+        let mut bytes = vec![REMOVE_INSTRUCTION_SIGN, instruction.len()];
+        assert_eq!(bytes, instruction.to_bytes());
+
+        length = MIN_INSTRUCTION_LENGTH;
+        instruction = Instruction::Remove { length };
+        bytes = vec![REMOVE_INSTRUCTION_SIGN, instruction.len()];
+        assert_eq!(bytes, instruction.to_bytes());
+    }
 }
