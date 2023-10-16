@@ -173,18 +173,35 @@ mod instructions_tests {
     #[test]
     fn push() {
         let mut instruction = Instruction::Add {
-            content: vec![0; (MAX_INSTRUCTION_LENGTH-1).into()],
+            content: vec![0; (MAX_INSTRUCTION_LENGTH - 1).into()],
         };
         assert!(instruction.push(b'\x00').is_ok());
         assert!(instruction.is_full());
         assert!(instruction.push(b'\x00').is_err());
 
         instruction = Instruction::Remove {
-            length: (MAX_INSTRUCTION_LENGTH-1),
+            length: (MAX_INSTRUCTION_LENGTH - 1),
         };
         assert!(instruction.push(b'\x00').is_ok());
         assert!(instruction.is_full());
         assert!(instruction.push(b'\x00').is_err());
+    }
 
+    #[test]
+    fn sign() {
+        let mut instruction = Instruction::Add {
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+        };
+        assert_eq!(instruction.sign(), ADD_INSTRUCTION_SIGN);
+
+        let instruction = Instruction::Remove {
+            length: MIN_INSTRUCTION_LENGTH,
+        };
+        assert_eq!(instruction.sign(), REMOVE_INSTRUCTION_SIGN);
+
+        let instruction = Instruction::Copy {
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+        };
+        assert_eq!(instruction.sign(), COPY_INSTRUCTION_SIGN);
     }
 }
