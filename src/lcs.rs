@@ -1,53 +1,15 @@
 #[derive(Debug, Clone, PartialEq)]
-pub struct Lcs {
+pub struct Lcs<'a> {
+    source: &'a [u8],
+    target: &'a [u8],
     table: Vec<Vec<usize>>,
 }
 
-impl Lcs {
-    fn example_lcs(source: &[u8], target: &[u8]) -> Vec<u8> {
-        let s_len = source.len();
-        let t_len = target.len();
+impl<'a> Lcs<'a> {
 
-        let mut table = vec![vec![0; t_len + 1]; s_len + 1];
-
-        for i in 0..=s_len {
-            for j in 0..=t_len {
-                if i == 0 || j == 0 {
-                    table[i][j] = 0
-                } else if source[i - 1] == target[j - 1] {
-                    table[i][j] = table[i - 1][j - 1] + 1
-                } else {
-                    table[i][j] = table[i - 1][j].max(table[i][j - 1])
-                }
-            }
-        }
-
-        let mut index = table[s_len][t_len];
-        let mut lcs = vec![0; index + 1];
-        lcs[index] = 0;
-
-        let mut i = s_len;
-        let mut j = t_len;
-        while i > 0 && j > 0 {
-            if source[i - 1] == target[j - 1] {
-                lcs[index - 1] = source[i - 1];
-                i -= 1;
-                j -= 1;
-                index -= 1
-            } else if table[i - 1][j] > table[i][j - 1] {
-                i -= 1
-            } else {
-                j -= 1
-            }
-        }
-        lcs.resize(table[s_len][t_len], 0);
-
-        lcs
-    }
-
-    pub fn new(source: &[u8], target: &[u8]) -> Self {
+    pub fn new(source: &'a [u8], target: &'a [u8]) -> Self {
         let source_length = source.len();
-        let target_length = source.len();
+        let target_length = target.len();
         let mut table = vec![vec![0usize; target_length + 1]; source_length + 1];
 
         for x in 0..=source_length {
@@ -62,12 +24,40 @@ impl Lcs {
             }
         }
 
-        Self { table }
+        Self {
+            table,
+            source,
+            target,
+        }
     }
 
     pub fn length(&self) -> usize {
-        let last_index = self.table.len() - 1;
-        self.table[last_index][last_index]
+        let source_length = self.source.len();
+        let target_length = self.target.len();
+        self.table[source_length][target_length]
+    }
+
+    pub fn subsequence(&self) -> Vec<u8> {
+        let mut index = self.length();
+        let mut subsequence: Vec<u8> = vec![0; index + 1];
+
+        let mut x = self.source.len();
+        let mut y = self.target.len();
+        while x > 0 && y > 0 {
+            if self.source[x - 1] == self.target[y - 1] {
+                subsequence[index - 1] = self.source[x - 1];
+                x -= 1;
+                y -= 1;
+                index -= 1
+            } else if self.table[x - 1][y] > self.table[x][y - 1] {
+                x -= 1
+            } else {
+                y -= 1
+            }
+        }
+
+        subsequence.pop();
+        subsequence
     }
 }
 
@@ -77,16 +67,28 @@ mod lcs_tests {
 
     #[test]
     fn new() {
-        let lcs = Lcs::new(&[0, 0, 0],  &[0, 0, 0]);
+        let lcs = Lcs::new(&[0, 0, 0], &[0, 0, 0]);
         assert_eq!(lcs.table.iter().flatten().sum::<usize>(), 14);
     }
 
     #[test]
     fn length() {
-        let mut lcs = Lcs::new(&[],  &[]);
+        let mut lcs = Lcs::new(&[], &[]);
         assert_eq!(lcs.length(), 0);
 
-        lcs = Lcs::new(&[0],  &[0]);
+        lcs = Lcs::new(&[0], &[0]);
         assert_eq!(lcs.length(), 1);
+    }
+
+    #[test]
+    fn subsequence() {
+        let lcs = Lcs::new(&[0, 1, 2], &[0, 1, 2]);
+        assert_eq!(lcs.subsequence(), &[0, 1, 2]);
+
+        let lcs = Lcs::new(b"XMJYAUZ", b"MZJAWXU");
+        assert_eq!(lcs.subsequence(), b"MJAU");
+
+        let lcs = Lcs::new(b"AAA", b"");
+        assert_eq!(lcs.subsequence(), b"");
     }
 }
