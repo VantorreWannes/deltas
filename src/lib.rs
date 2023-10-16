@@ -1,4 +1,5 @@
-pub mod delta_instruction;
+pub mod instructions;
+pub mod instruction_error;
 
 
 pub fn add(left: usize, right: usize) -> usize {
