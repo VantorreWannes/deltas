@@ -5,8 +5,9 @@ mod add_instruction;
 mod copy_instruction;
 mod remove_instruction;
 
-const MAX_INSTRUCTION_LENGTH: u8 = u8::MAX;
-const MIN_INSTRUCTION_LENGTH: u8 = u8::MIN;
+type InstructionLength = u8;
+const MAX_INSTRUCTION_LENGTH: u8 = InstructionLength::MAX;
+const MIN_INSTRUCTION_LENGTH: u8 = InstructionLength::MIN;
 
 const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 const ADD_INSTRUCTION_SIGN: u8 = b'+';
