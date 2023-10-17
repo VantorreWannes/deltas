@@ -1,6 +1,8 @@
+use std::{iter::Peekable, slice::Iter};
+
 use crate::{instructions::Instruction, lcs::Lcs};
 
-pub const ERROR_PERCENT_TRESHOLD: usize = 50;
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Patch {
@@ -8,6 +10,7 @@ pub struct Patch {
 }
 
 impl Patch {
+    /*
     pub fn new(source: &[u8], target: &[u8]) -> Self {
         let mut content: Vec<Instruction> = Vec::new();
         let lcs = Lcs::new(source, target).subsequence();
@@ -118,15 +121,49 @@ impl Patch {
 
         Self { content }
     }
+    */
+
+    pub fn new(source: &[u8], target: &[u8]) -> Self {
+        let lcs = Lcs::new(source, target).subsequence();
+        let mut lcs_iter = lcs.iter().peekable();
+        let mut source_iter = source.iter().peekable();
+        let mut target_iter = target.iter().peekable();
+        Self {
+            content: Self::create_instructions(&mut source_iter, &mut target_iter, &mut lcs_iter),
+        }
+    }
+
+    pub fn create_instructions(
+        source: &mut Peekable<Iter<'_, u8>>,
+        target: &mut Peekable<Iter<'_, u8>>,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+    ) -> Vec<Instruction> {
+        let mut content: Vec<Instruction> = Vec::new();
+        while source.peek().is_some() || target.peek().is_some() {
+            match lcs.peek() {
+                lcs_item if lcs_item == source.peek() && lcs_item == target.peek() => {
+                    // Copy
+                    todo!();
+                },
+                lcs_item if lcs_item != source.peek() => {
+                    // Remove
+                    todo!();
+                }
+                lcs_item if lcs_item != target.peek() => {
+                    // Add
+                    todo!();
+                }
+                _ => todo!(),
+            }
+        }
+        todo!();
+    }
 
     fn byte_len(&self) -> usize {
         self.content
             .iter()
             .map(|instruction| match instruction {
                 Instruction::Remove { length: _ } => 2,
-                Instruction::Add { content } | Instruction::Copy { content, .. } => {
-                    content.len() + 2
-                }
                 Instruction::Add { content } | Instruction::Copy { content, .. } => {
                     content.len() + 2
                 }
