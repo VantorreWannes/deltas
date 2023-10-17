@@ -1,11 +1,13 @@
+use super::InstructionItem;
+
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct CopyInstruction {
-    content: Vec<u8>,
+    content: Vec<InstructionItem>,
 }
 
 impl CopyInstruction {
-    pub fn new(content: Vec<u8>) -> Self {
+    pub fn new(content: Vec<InstructionItem>) -> Self {
         Self { content }
     }
 
