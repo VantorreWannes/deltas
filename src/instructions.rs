@@ -9,6 +9,8 @@ pub const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 pub const ADD_INSTRUCTION_SIGN: u8 = b'+';
 pub const COPY_INSTRUCTION_SIGN: u8 = b'|';
 
+pub const ERROR_PERCENT_TRESHOLD: usize = 50;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
     Remove { length: u8 },
@@ -44,7 +46,7 @@ impl Instruction {
                 if byte != 0 {
                     *error += 1;
                 }
-            },
+            }
         }
         Ok(())
     }
@@ -62,7 +64,10 @@ impl Instruction {
             Instruction::Remove { length } => {
                 vec![REMOVE_INSTRUCTION_SIGN, *length]
             }
-            Instruction::Add { content } | Instruction::Copy { content: content, .. } => {
+            Instruction::Add { content }
+            | Instruction::Copy {
+                content: content, ..
+            } => {
                 let mut bytes = vec![self.sign(), content.len() as u8];
                 bytes.extend(content);
                 bytes
@@ -103,20 +108,55 @@ impl Instruction {
     }
 
     pub fn is_add(&self) -> bool {
-        matches!(self, Instruction::Add{..})
+        matches!(self, Instruction::Add { .. })
     }
 
     pub fn is_copy(&self) -> bool {
         matches!(self, Instruction::Copy { .. })
     }
 
-    pub fn copy_error(&self) -> Option<u8> {
+    pub fn error(&self) -> Option<u8> {
         match self {
             Instruction::Copy { error, .. } => Some(*error),
-            _ => None
+            _ => None,
         }
     }
 
+    pub fn error_limit_exceeded(&self) -> bool {
+        self.error().map_or(false, |error| {
+            (error as usize) < (self.len() as usize * ERROR_PERCENT_TRESHOLD) / 100
+        })
+    }
+
+    pub fn fill(
+        &mut self,
+        source: &mut Peekable<Iter<'_, u8>>,
+        target: &mut Peekable<Iter<'_, u8>>,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+    ) {
+        match self {
+            instruction if instruction.is_remove() => {
+                while source.peek() == lcs.peek() && !instruction.is_full() {
+                    instruction.push(*source.next().unwrap()).unwrap();
+                }
+            }
+            instruction if instruction.is_add() => {
+                while target.peek() == lcs.peek() && !instruction.is_full() {
+                    instruction.push(*target.next().unwrap()).unwrap();
+                }
+            }
+            instruction if instruction.is_copy() => {
+                while ((target.peek() == lcs.peek() && source.peek() == lcs.peek())
+                    || !instruction.error_limit_exceeded())
+                    && !instruction.is_full()
+                {
+                    let difference = target.next().unwrap().wrapping_sub(*source.next().unwrap());
+                    instruction.push(difference).unwrap();
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl From<&Instruction> for Vec<u8> {
@@ -227,7 +267,8 @@ mod instructions_tests {
         assert_eq!(instruction.sign(), REMOVE_INSTRUCTION_SIGN);
 
         let instruction = Instruction::Copy {
-            content: vec![0; MIN_INSTRUCTION_LENGTH.into()], error: 0
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+            error: 0,
         };
         assert_eq!(instruction.sign(), COPY_INSTRUCTION_SIGN);
     }
@@ -286,7 +327,8 @@ mod instructions_tests {
     #[test]
     fn copy_try_from_bytes_ok() {
         let mut instruction = Instruction::Copy {
-            content: vec![0; MAX_INSTRUCTION_LENGTH.into()], error: 0
+            content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
+            error: 0,
         };
         let mut bytes = instruction.to_bytes();
         let mut constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
@@ -294,7 +336,8 @@ mod instructions_tests {
         assert_eq!(instruction, constructed_instruction.unwrap());
 
         instruction = Instruction::Copy {
-            content: vec![0; MIN_INSTRUCTION_LENGTH.into()], error: 0
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+            error: 0,
         };
         bytes = instruction.to_bytes();
         constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
@@ -324,7 +367,8 @@ mod instructions_tests {
     #[test]
     fn try_from_bytes_sign_err() {
         let mut content = vec![];
-        let mut constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
+        let mut constructed_instruction =
+            Instruction::try_from_bytes(&mut content.iter().peekable());
         assert!(constructed_instruction.is_err_and(|err| err == InstructionError::MissingSign));
 
         content.push(b'\x00');
@@ -335,7 +379,8 @@ mod instructions_tests {
     #[test]
     fn try_from_bytes_length_err() {
         let mut content = vec![ADD_INSTRUCTION_SIGN];
-        let mut constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
+        let mut constructed_instruction =
+            Instruction::try_from_bytes(&mut content.iter().peekable());
         assert!(constructed_instruction.is_err_and(|err| err == InstructionError::MissingLength));
 
         content = vec![REMOVE_INSTRUCTION_SIGN];
@@ -351,7 +396,8 @@ mod instructions_tests {
     fn try_from_bytes_content_err() {
         let mut content = vec![ADD_INSTRUCTION_SIGN];
         content.push(MAX_INSTRUCTION_LENGTH);
-        let mut constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
+        let mut constructed_instruction =
+            Instruction::try_from_bytes(&mut content.iter().peekable());
         assert!(constructed_instruction.is_err_and(|err| err == InstructionError::MissingContent));
 
         content = vec![REMOVE_INSTRUCTION_SIGN];
@@ -363,5 +409,20 @@ mod instructions_tests {
         content.push(MAX_INSTRUCTION_LENGTH);
         constructed_instruction = Instruction::try_from_bytes(&mut content.iter().peekable());
         assert!(constructed_instruction.is_err_and(|err| err == InstructionError::MissingContent));
+    }
+
+    #[test]
+    fn error() {
+        todo!();
+    }
+
+    #[test]
+    fn error_limit_exceeded() {
+        todo!();
+    }
+
+    #[test]
+    fn fill() {
+        todo!();
     }
 }
