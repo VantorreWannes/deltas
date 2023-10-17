@@ -9,8 +9,4 @@ impl RemoveInstruction {
     pub fn new(length: InstructionLength) -> Self {
         Self { length }
     }
-
-    pub fn len(&self) -> InstructionLength {
-        self.length
-    }
 }

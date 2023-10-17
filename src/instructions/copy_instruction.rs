@@ -1,4 +1,3 @@
-use super::InstructionLength;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct CopyInstruction {
@@ -10,7 +9,4 @@ impl CopyInstruction {
         Self { content }
     }
 
-    pub fn len(&self) -> InstructionLength {
-        self.content.len().try_into().unwrap()
-    }
 }
