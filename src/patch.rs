@@ -12,20 +12,36 @@ impl Patch {
         let (mut source_index, mut target_index, mut lcs_index) = (0, 0, 0);
         while source_index < source.len() {
             if source[source_index] != lcs[lcs_index] {
-                //Remove
-                let mut instruction = content.pop().unwrap_or(Instruction::Remove { length: 0 });
+                // Remove
+                if let Some(last_instruction) = content
+                    .last_mut()
+                    .filter(|instr| !instr.is_full() && instr.is_remove())
+                {
+                    last_instruction.push(source[source_index]).unwrap();
+                } else {
+                    content.push(Instruction::Remove { length: 1 });
+                }
                 source_index += 1;
             } else if target[target_index] != lcs[lcs_index] {
                 //Add
+                if let Some(last_instruction) = content
+                    .last_mut()
+                    .filter(|instr| !instr.is_full() && instr.is_remove())
+                {
+                    last_instruction.push(source[source_index]).unwrap();
+                } else {
+                    content.push(Instruction::Add { content: vec![source[source_index]] });
+                }
                 target_index += 1;
             } else {
                 //Copy
+
                 source_index += 1;
                 target_index += 1;
                 lcs_index += 1;
             }
         }
-        todo!();
+        Self { content }
     }
 
     fn byte_len(&self) -> usize {
