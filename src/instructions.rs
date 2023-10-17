@@ -20,7 +20,7 @@ impl Instruction {
     pub fn len(&self) -> u8 {
         match self {
             Instruction::Remove { length } => *length,
-            Instruction::Add { content } | Instruction::Copy { content: content, .. } => content.len() as u8,
+            Instruction::Add { content } | Instruction::Copy { content, .. } => content.len() as u8,
         }
     }
 
@@ -39,7 +39,7 @@ impl Instruction {
         match self {
             Instruction::Remove { length } => *length += 1,
             Instruction::Add { content } => content.push(byte),
-            Instruction::Copy { content: content, error } => {
+            Instruction::Copy { content, error } => {
                 content.push(byte);
                 if byte != 0 {
                     *error += 1;
@@ -108,6 +108,13 @@ impl Instruction {
 
     pub fn is_copy(&self) -> bool {
         matches!(self, Instruction::Copy { .. })
+    }
+
+    pub fn copy_error(&self) -> Option<u8> {
+        match self {
+            Instruction::Copy { error, .. } => Some(*error),
+            _ => None
+        }
     }
 
 }
