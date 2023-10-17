@@ -13,14 +13,14 @@ pub const COPY_INSTRUCTION_SIGN: u8 = b'|';
 pub enum Instruction {
     Remove { length: u8 },
     Add { content: Vec<u8> },
-    Copy { content: Vec<u8> },
+    Copy { content: Vec<u8>, error: u8 },
 }
 
 impl Instruction {
     pub fn len(&self) -> u8 {
         match self {
             Instruction::Remove { length } => *length,
-            Instruction::Add { content } | Instruction::Copy { content } => content.len() as u8,
+            Instruction::Add { content } | Instruction::Copy { content: content, .. } => content.len() as u8,
         }
     }
 
@@ -38,7 +38,13 @@ impl Instruction {
         }
         match self {
             Instruction::Remove { length } => *length += 1,
-            Instruction::Add { content } | Instruction::Copy { content } => content.push(byte),
+            Instruction::Add { content } => content.push(byte),
+            Instruction::Copy { content: content, error } => {
+                content.push(byte);
+                if byte != 0 {
+                    *error += 1;
+                }
+            },
         }
         Ok(())
     }
@@ -56,7 +62,7 @@ impl Instruction {
             Instruction::Remove { length } => {
                 vec![REMOVE_INSTRUCTION_SIGN, *length]
             }
-            Instruction::Add { content } | Instruction::Copy { content } => {
+            Instruction::Add { content } | Instruction::Copy { content: content, .. } => {
                 let mut bytes = vec![self.sign(), content.len() as u8];
                 bytes.extend(content);
                 bytes
@@ -84,7 +90,8 @@ impl Instruction {
                 if content.len() != length {
                     return Err(InstructionError::MissingContent);
                 }
-                Ok(Instruction::Copy { content })
+                let error = content.iter().filter(|num| **num != 0).count() as u8;
+                Ok(Instruction::Copy { content, error })
             }
             Some(_) => Err(InstructionError::InvalidSign),
             None => Err(InstructionError::MissingSign),
@@ -102,6 +109,7 @@ impl Instruction {
     pub fn is_copy(&self) -> bool {
         matches!(self, Instruction::Copy { .. })
     }
+
 }
 
 impl From<&Instruction> for Vec<u8> {
@@ -212,7 +220,7 @@ mod instructions_tests {
         assert_eq!(instruction.sign(), REMOVE_INSTRUCTION_SIGN);
 
         let instruction = Instruction::Copy {
-            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()], error: 0
         };
         assert_eq!(instruction.sign(), COPY_INSTRUCTION_SIGN);
     }
@@ -271,7 +279,7 @@ mod instructions_tests {
     #[test]
     fn copy_try_from_bytes_ok() {
         let mut instruction = Instruction::Copy {
-            content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
+            content: vec![0; MAX_INSTRUCTION_LENGTH.into()], error: 0
         };
         let mut bytes = instruction.to_bytes();
         let mut constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
@@ -279,7 +287,7 @@ mod instructions_tests {
         assert_eq!(instruction, constructed_instruction.unwrap());
 
         instruction = Instruction::Copy {
-            content: vec![0; MIN_INSTRUCTION_LENGTH.into()],
+            content: vec![0; MIN_INSTRUCTION_LENGTH.into()], error: 0
         };
         bytes = instruction.to_bytes();
         constructed_instruction = Instruction::try_from_bytes(&mut bytes.iter().peekable());
