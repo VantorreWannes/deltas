@@ -1,7 +1,5 @@
-pub mod instructions;
-pub mod instruction_error;
-pub mod patch;
 pub mod lcs;
+pub mod instructions;
 
 
 pub fn add(left: usize, right: usize) -> usize {
