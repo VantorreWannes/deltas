@@ -1,4 +1,10 @@
-use crate::{instructions::Instruction, lcs::Lcs};
+
+use crate::{
+    instructions::Instruction,
+    lcs::Lcs,
+};
+
+pub const ERROR_PERCENT_TRESHOLD: usize = 50;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Patch {
@@ -10,37 +16,88 @@ impl Patch {
         let mut content: Vec<Instruction> = Vec::new();
         let lcs = Lcs::new(source, target).subsequence();
         let (mut source_index, mut target_index, mut lcs_index) = (0, 0, 0);
-        while source_index < source.len() {
-            if source[source_index] != lcs[lcs_index] {
-                // Remove
-                if let Some(last_instruction) = content
-                    .last_mut()
-                    .filter(|instr| !instr.is_full() && instr.is_remove())
+        while source_index < source.len() && target_index < target.len() {
+
+            if let Some(instruction) = content.last_mut().filter(|instruction| {
+                instruction.copy_error().is_some_and(|error| {
+                    ((instruction.len() as usize * ERROR_PERCENT_TRESHOLD) / 100) > error as usize
+                })
+            }) {
+                //Copy
+                let adjusted_difference = target[target_index].wrapping_sub(source[source_index]);
+                if !instruction.is_full() {
+                    instruction.push(adjusted_difference).unwrap();
+                } else {
+                    content.push(Instruction::Copy {
+                        content: vec![adjusted_difference],
+                        error: 1,
+                    });
+                }
+                source_index += 1;
+                target_index += 1;
+            } else if source[source_index] == lcs[lcs_index]
+                && target[target_index] == lcs[lcs_index]
+            {
+                //Copy
+                if let Some(instruction) = content.last_mut()
+                    .filter(|instruction| instruction.is_copy() && !instruction.is_full())
                 {
-                    last_instruction.push(source[source_index]).unwrap();
+                    instruction.push(lcs[lcs_index]).unwrap();
+                } else {
+                    content.push(Instruction::Copy {
+                        content: vec![lcs[lcs_index]],
+                        error: 0,
+                    });
+                }
+                source_index += 1;
+                target_index += 1;
+                lcs_index += 1;
+            } else if source[source_index] != lcs[lcs_index] {
+                // Remove
+                if let Some(instruction) = content.last_mut()
+                    .filter(|instruction| !instruction.is_full() && instruction.is_remove())
+                {
+                    instruction.push(source[source_index]).unwrap();
                 } else {
                     content.push(Instruction::Remove { length: 1 });
                 }
                 source_index += 1;
             } else if target[target_index] != lcs[lcs_index] {
                 //Add
-                if let Some(last_instruction) = content
-                    .last_mut()
-                    .filter(|instr| !instr.is_full() && instr.is_remove())
+                if let Some(instruction) = content.last_mut()
+                    .filter(|instruction| !instruction.is_full() && instruction.is_add())
                 {
-                    last_instruction.push(source[source_index]).unwrap();
+                    instruction.push(target[target_index]).unwrap();
                 } else {
-                    content.push(Instruction::Add { content: vec![source[source_index]] });
+                    content.push(Instruction::Add {
+                        content: vec![target[target_index]],
+                    });
                 }
                 target_index += 1;
-            } else {
-                //Copy
-
-                source_index += 1;
-                target_index += 1;
-                lcs_index += 1;
             }
         }
+        if source.len() > source_index {
+            if let Some(instruction) = content
+                .last_mut()
+                .filter(|instruction| !instruction.is_full() && instruction.is_remove())
+            {
+                instruction.push(source[source_index]).unwrap();
+            } else {
+                content.push(Instruction::Remove { length: 1 });
+            }
+        } else if target.len() > target_index {
+            if let Some(instruction) = content
+                .last_mut()
+                .filter(|instruction| !instruction.is_full() && instruction.is_add())
+            {
+                instruction.push(target[target_index]).unwrap();
+            } else {
+                content.push(Instruction::Add {
+                    content: vec![target[target_index]],
+                });
+            }
+        }
+
         Self { content }
     }
 
@@ -49,7 +106,9 @@ impl Patch {
             .iter()
             .map(|instruction| match instruction {
                 Instruction::Remove { length: _ } => 2,
-                Instruction::Add { content } | Instruction::Copy { content } => content.len() + 2,
+                Instruction::Add { content } | Instruction::Copy { content, .. } => {
+                    content.len() + 2
+                }
             })
             .sum()
     }
@@ -105,6 +164,7 @@ mod patch_tests {
 
         instruction = Instruction::Copy {
             content: vec![0; MAX_INSTRUCTION_LENGTH.into()],
+            error: 0,
         };
         patch.content = vec![instruction.clone()];
 
