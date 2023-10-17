@@ -90,6 +90,18 @@ impl Instruction {
             None => Err(InstructionError::MissingSign),
         }
     }
+
+    pub fn is_remove(&self) -> bool {
+        matches!(self, Instruction::Remove { .. })
+    }
+
+    pub fn is_add(&self) -> bool {
+        matches!(self, Instruction::Add{..})
+    }
+
+    pub fn is_copy(&self) -> bool {
+        matches!(self, Instruction::Copy { .. })
+    }
 }
 
 impl From<&Instruction> for Vec<u8> {

@@ -7,17 +7,19 @@ pub struct Patch {
 
 impl Patch {
     pub fn new(source: &[u8], target: &[u8]) -> Self {
+        let mut content: Vec<Instruction> = Vec::new();
         let lcs = Lcs::new(source, target).subsequence();
         let (mut source_index, mut target_index, mut lcs_index) = (0, 0, 0);
         while source_index < source.len() {
             if source[source_index] != lcs[lcs_index] {
-                //Removed
+                //Remove
+                let mut instruction = content.pop().unwrap_or(Instruction::Remove { length: 0 });
                 source_index += 1;
             } else if target[target_index] != lcs[lcs_index] {
-                //Added
+                //Add
                 target_index += 1;
             } else {
-                //Copied
+                //Copy
                 source_index += 1;
                 target_index += 1;
                 lcs_index += 1;
