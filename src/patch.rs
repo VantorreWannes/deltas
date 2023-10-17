@@ -37,6 +37,7 @@ impl Patch {
                     .filter(|instruction| !instruction.is_full() && instruction.is_remove())
                 {
                     instruction.push(source[source_index]).unwrap();
+                    instruction.push(source[source_index]).unwrap();
                 } else {
                     content.push(Instruction::Remove { length: 1 });
                 }
@@ -48,12 +49,33 @@ impl Patch {
                     .filter(|instruction| !instruction.is_full() && instruction.is_add())
                 {
                     instruction.push(target[target_index]).unwrap();
+                    instruction.push(target[target_index]).unwrap();
                 } else {
+                    content.push(Instruction::Add {
+                        content: vec![target[target_index]],
+                    });
                     content.push(Instruction::Add {
                         content: vec![target[target_index]],
                     });
                 }
                 target_index += 1;
+            }
+        }
+        if source.len() > source_index {
+            if let Some(instruction) = content
+                .last_mut()
+                .filter(|instruction| !instruction.is_full() && instruction.is_remove())
+            {
+                instruction.push(source[source_index]).unwrap();
+            } else {
+                content.push(Instruction::Remove { length: 1 });
+            }
+        } else if target.len() > target_index {
+            if let Some(instruction) = content
+                .last_mut()
+                .filter(|instruction| !instruction.is_full() && instruction.is_add())
+            {
+                instruction.push(target[target_index]).unwrap();
             }
         }
         if source.len() > source_index {
@@ -102,6 +124,9 @@ impl Patch {
             .iter()
             .map(|instruction| match instruction {
                 Instruction::Remove { length: _ } => 2,
+                Instruction::Add { content } | Instruction::Copy { content, .. } => {
+                    content.len() + 2
+                }
                 Instruction::Add { content } | Instruction::Copy { content, .. } => {
                     content.len() + 2
                 }
