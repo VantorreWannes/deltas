@@ -1,4 +1,4 @@
-use super::InstructionItem;
+use super::{InstructionItem, traits::InstructionInfo, InstructionLength, MIN_INSTRUCTION_LENGTH};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct AddInstruction {
@@ -10,3 +10,18 @@ impl AddInstruction {
         Self { content }
     }
 }
+
+impl InstructionInfo for AddInstruction {
+    fn len(&self) -> InstructionLength {
+        self.content.len().try_into().unwrap()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.len() == InstructionLength::MIN
+    }
+
+    fn is_full(&self) -> bool {
+        self.len() == InstructionLength::MAX
+    }
+}
+
