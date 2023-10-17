@@ -3,12 +3,12 @@ use super::InstructionItem;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct CopyInstruction {
-    content: Vec<InstructionItem>,
+    exceptions: Vec<InstructionItem>,
 }
 
 impl CopyInstruction {
-    pub fn new(content: Vec<InstructionItem>) -> Self {
-        Self { content }
+    pub fn new(exceptions: Vec<InstructionItem>) -> Self {
+        Self { exceptions }
     }
 
 }
