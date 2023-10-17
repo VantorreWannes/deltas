@@ -66,7 +66,7 @@ impl Instruction {
             }
             Instruction::Add { content }
             | Instruction::Copy {
-                content: content, ..
+                content, ..
             } => {
                 let mut bytes = vec![self.sign(), content.len() as u8];
                 bytes.extend(content);
@@ -413,7 +413,10 @@ mod instructions_tests {
 
     #[test]
     fn error() {
-        todo!();
+        assert!(Instruction::Remove { length: 0 }.error().is_none());
+        assert!(Instruction::Add { content: vec![] }.error().is_none());
+        assert!(Instruction::Copy { content: vec![0], error: 0 }.error().is_none());
+        assert!(Instruction::Copy { content: vec![0], error: 1 }.error().is_some());
     }
 
     #[test]
