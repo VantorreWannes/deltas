@@ -72,9 +72,10 @@ impl InstructionBytes for AddInstruction {
             .collect();
         let length = InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().unwrap());
         let content_bytes: Vec<u8> = bytes.take(length.try_into().unwrap()).copied().collect();
-        let content: Vec<InstructionItem> = content_bytes.chunks_exact(std::mem::size_of::<InstructionItem>()).map(|chunk|
-        InstructionItem::from_be_bytes(chunk.try_into().unwrap())
-        ).collect();
+        let content: Vec<InstructionItem> = content_bytes
+            .chunks_exact(std::mem::size_of::<InstructionItem>())
+            .map(|chunk| InstructionItem::from_be_bytes(chunk.try_into().unwrap()))
+            .collect();
         Ok(Self { content })
     }
 }
@@ -94,13 +95,22 @@ mod add_instruction_tests {
 
     #[test]
     fn instruction_info() {
-        let mut instruction =
-            AddInstruction::new(vec![0; InstructionLength::MAX.try_into().unwrap()]);
+        let mut instruction = AddInstruction::new(vec![
+            InstructionItem::default();
+            InstructionLength::MAX.try_into().unwrap()
+        ]);
         assert_eq!(instruction.len(), InstructionLength::MAX);
         assert!(instruction.is_full());
 
-        instruction = AddInstruction::new(vec![0; InstructionLength::MIN.try_into().unwrap()]);
+        instruction = AddInstruction::new(vec![
+            InstructionItem::default();
+            InstructionLength::MIN.try_into().unwrap()
+        ]);
         assert_eq!(instruction.len(), InstructionLength::MIN);
         assert!(instruction.is_empty());
+
+        instruction = AddInstruction::default();
+        assert_eq!(instruction.len(), InstructionLength::MIN);
+        assert!(instruction.is_empty()); 
     }
 }
