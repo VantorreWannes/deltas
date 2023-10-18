@@ -71,3 +71,23 @@ impl InstructionBytes for AddInstruction {
         })
     }
 }
+
+#[cfg(test)]
+mod add_instruction_tests {
+    use super::*;
+    
+    #[test]
+    fn instruction_info() {
+        let mut instruction = AddInstruction::new(vec![
+            0; InstructionLength::MAX.try_into().unwrap()
+        ]);
+        assert_eq!(instruction.len(), InstructionLength::MAX);
+        assert!(instruction.is_full());
+
+        instruction = AddInstruction::new(vec![
+            0; InstructionLength::MIN.try_into().unwrap()
+        ]);
+        assert_eq!(instruction.len(), InstructionLength::MIN);
+        assert!(instruction.is_empty());
+    }
+}
