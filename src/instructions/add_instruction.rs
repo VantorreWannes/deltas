@@ -33,6 +33,8 @@ impl InstructionInfo for AddInstruction {
     fn is_full(&self) -> bool {
         self.len() == InstructionLength::MAX
     }
+
+
 }
 
 impl InstructionContent for AddInstruction {
