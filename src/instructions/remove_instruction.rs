@@ -1,4 +1,8 @@
-use super::{InstructionLength, traits::{InstructionInfo, InstructionContent, InstructionBytes}, InstructionItem, error::InstructionError, Result, REMOVE_INSTRUCTION_SIGN};
+use super::{
+    error::InstructionError,
+    traits::{InstructionBytes, InstructionContent, InstructionInfo},
+    InstructionItem, InstructionLength, Result, REMOVE_INSTRUCTION_SIGN,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct RemoveInstruction {
@@ -10,7 +14,6 @@ impl RemoveInstruction {
         Self { length }
     }
 }
-
 
 impl InstructionInfo for RemoveInstruction {
     fn len(&self) -> InstructionLength {
@@ -37,7 +40,6 @@ impl InstructionContent for RemoveInstruction {
 }
 
 impl InstructionBytes for RemoveInstruction {
-
     fn byte_sign() -> u8 {
         REMOVE_INSTRUCTION_SIGN
     }
@@ -53,7 +55,10 @@ impl InstructionBytes for RemoveInstruction {
         bytes
     }
 
-    fn try_from_bytes(bytes: &mut  std::iter::Peekable<std::slice::Iter<'_, u8>>) -> Result<Self> where Self: Sized {
+    fn try_from_bytes(bytes: &mut std::iter::Peekable<std::slice::Iter<'_, u8>>) -> Result<Self>
+    where
+        Self: Sized,
+    {
         match bytes.next() {
             Some(&REMOVE_INSTRUCTION_SIGN) => (),
             Some(_) => return Err(InstructionError::InvalidSign),
@@ -64,7 +69,12 @@ impl InstructionBytes for RemoveInstruction {
                 .take(std::mem::size_of::<InstructionLength>())
                 .copied()
                 .collect();
-            InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().map_err(|_| InstructionError::MissingLength)?)
+            InstructionLength::from_be_bytes(
+                length_bytes
+                    .as_slice()
+                    .try_into()
+                    .map_err(|_| InstructionError::MissingLength)?,
+            )
         };
         Ok(Self { length })
     }
@@ -76,14 +86,22 @@ impl Default for RemoveInstruction {
     }
 }
 
-
 #[cfg(test)]
 mod remove_instruction_tests {
     use super::*;
 
     #[test]
     fn instruction_info() {
-        todo!();
+        let mut instruction = RemoveInstruction::new(InstructionLength::MAX);
+        assert_eq!(instruction.len(), InstructionLength::MAX);
+        assert!(instruction.is_full());
+
+        instruction = RemoveInstruction::new(InstructionLength::MIN);
+        assert_eq!(instruction.len(), InstructionLength::MIN);
+        assert!(instruction.is_empty());
+
+        let default_instruction = RemoveInstruction::default();
+        assert_eq!(default_instruction, instruction);
     }
 
     #[test]
@@ -93,7 +111,7 @@ mod remove_instruction_tests {
 
     #[test]
     fn instruction_bytes_try_from_bytes_ok() {
-       todo!();
+        todo!();
     }
 
     #[test]
@@ -101,5 +119,3 @@ mod remove_instruction_tests {
         todo!();
     }
 }
-
-
