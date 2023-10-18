@@ -3,7 +3,7 @@ use std::{iter::Peekable, slice::Iter};
 use super::{InstructionItem, InstructionLength, traits::{InstructionInfo, InstructionContent, InstructionBytes}, error::InstructionError, Result, COPY_INSTRUCTION_SIGN};
 
 
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CopyInstruction {
     content: Vec<InstructionItem>,
 }
@@ -103,6 +103,14 @@ impl InstructionBytes for CopyInstruction {
         }
 
         Ok(Self { content })
+    }
+}
+
+
+impl Default for CopyInstruction {
+
+    fn default() -> Self {
+        Self { content: vec![InstructionItem::default(); InstructionLength::MIN.try_into().unwrap()] }
     }
 }
 
