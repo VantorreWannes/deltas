@@ -59,11 +59,10 @@ impl InstructionBytes for RemoveInstruction {
     where
         Self: Sized,
     {
-        match bytes.next() {
-            Some(&REMOVE_INSTRUCTION_SIGN) => (),
-            Some(_) => return Err(InstructionError::InvalidSign),
-            None => return Err(InstructionError::MissignSign),
-        };
+        todo!("Check for correct sign using .take() and std::mem::size_of()");
+        if bytes.peek().is_none() {
+            return Err(InstructionError::MissingLength);
+        }
         let length: InstructionLength = {
             let length_bytes: Vec<u8> = bytes
                 .take(std::mem::size_of::<InstructionLength>())
@@ -106,12 +105,14 @@ mod remove_instruction_tests {
 
     #[test]
     fn instruction_content() {
-        let mut instruction = RemoveInstruction::new(InstructionLength::MAX-1);
+        let mut instruction = RemoveInstruction::new(InstructionLength::MAX - 1);
         assert!(instruction.push(InstructionItem::default()).is_ok());
-        assert_eq!(instruction.push(InstructionItem::default()), Err(InstructionError::ContentOverflow));
+        assert_eq!(
+            instruction.push(InstructionItem::default()),
+            Err(InstructionError::ContentOverflow)
+        );
     }
 
-    
     #[test]
     fn instruction_bytes_to_bytes() {
         let mut instruction = RemoveInstruction::new(InstructionLength::MAX);
@@ -129,15 +130,30 @@ mod remove_instruction_tests {
     fn instruction_bytes_try_from_bytes_ok() {
         let mut instruction = RemoveInstruction::new(InstructionLength::MAX);
         let mut bytes = instruction.to_bytes();
-        assert_eq!(RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()), Ok(instruction));
+        assert_eq!(
+            RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
+            Ok(instruction)
+        );
 
         instruction = RemoveInstruction::default();
         bytes = instruction.to_bytes();
-        assert_eq!(RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()), Ok(instruction));
+        assert_eq!(
+            RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
+            Ok(instruction)
+        );
     }
 
     #[test]
     fn instruction_bytes_try_from_bytes_err() {
-        todo!();
+        let mut bytes: Vec<u8> = vec![];
+        assert_eq!(
+            RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
+            Err(InstructionError::MissignSign)
+        );
+        bytes = vec![InstructionItem::default()];
+        assert_eq!(
+            RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
+            Err(InstructionError::MissignSign)
+        );
     }
 }
