@@ -34,7 +34,9 @@ impl InstructionInfo for AddInstruction {
         self.len() == InstructionLength::MAX
     }
 
-
+    fn non_default_item_count(&self) -> InstructionLength {
+        self.content.iter().filter(|item| **item != InstructionItem::default()).count() as InstructionLength
+    }
 }
 
 impl InstructionContent for AddInstruction {
