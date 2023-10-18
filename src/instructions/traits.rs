@@ -17,6 +17,8 @@ pub trait InstructionContent {
 }
 pub trait InstructionBytes {
 
+    fn byte_length(&self) -> usize;
+
     fn to_bytes(&self) -> Vec<u8>;
 
     fn try_from_bytes(bytes: Peekable<Iter<'_, u8>>) -> Self where Self: Sized;
