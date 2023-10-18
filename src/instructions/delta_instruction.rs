@@ -1,6 +1,6 @@
 use super::{
     add_instruction::AddInstruction, copy_instruction::CopyInstruction,
-    remove_instruction::RemoveInstruction, InstructionContent, InstructionInfo, Result,
+    remove_instruction::RemoveInstruction, InstructionContent, InstructionInfo, Result, InstructionBytes, ADD_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -50,6 +50,44 @@ impl InstructionContent for DeltaInstruction {
             DeltaInstruction::Remove(instruction) => instruction.push(content),
             DeltaInstruction::Add(instruction) => instruction.push(content),
             DeltaInstruction::Copy(instruction) => instruction.push(content),
+        }
+    }
+}
+
+impl InstructionBytes for DeltaInstruction {
+    fn byte_sign(&self) -> u8 {
+        match self {
+            DeltaInstruction::Remove(instruction) => instruction.byte_sign(),
+            DeltaInstruction::Add(instruction) => instruction.byte_sign(),
+            DeltaInstruction::Copy(instruction) => instruction.byte_sign(),
+        }
+    }
+
+    fn byte_length(&self) -> usize {
+        match self {
+            DeltaInstruction::Remove(instruction) => instruction.byte_length(),
+            DeltaInstruction::Add(instruction) => instruction.byte_length(),
+            DeltaInstruction::Copy(instruction) => instruction.byte_length(),
+        }
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            DeltaInstruction::Remove(instruction) => instruction.to_bytes(),
+            DeltaInstruction::Add(instruction) => instruction.to_bytes(),
+            DeltaInstruction::Copy(instruction) => instruction.to_bytes(),
+        }
+    }
+
+    fn try_from_bytes(bytes: &mut std::iter::Peekable<std::slice::Iter<'_, u8>>) -> Result<Self>
+    where
+        Self: Sized {
+        match bytes.peek() {
+            Some(&&ADD_INSTRUCTION_SIGN) => Ok(DeltaInstruction::Add(AddInstruction::try_from_bytes(bytes)?)),
+            Some(&&REMOVE_INSTRUCTION_SIGN) => Ok(DeltaInstruction::Remove(RemoveInstruction::try_from_bytes(bytes)?)),
+            Some(&&COPY_INSTRUCTION_SIGN) =>  Ok(DeltaInstruction::Copy(CopyInstruction::try_from_bytes(bytes)?)),
+            None => Err(super::InstructionError::MissignSign),
+            _ => Err(super::InstructionError::InvalidSign),
         }
     }
 }
