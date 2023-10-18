@@ -47,6 +47,11 @@ impl InstructionContent for AddInstruction {
 }
 
 impl InstructionBytes for AddInstruction {
+
+    fn byte_sign(&self) -> u8 {
+        ADD_INSTRUCTION_SIGN
+    }
+
     fn byte_length(&self) -> usize {
         usize::try_from(self.len()).unwrap() + std::mem::size_of::<InstructionLength>() + 1
     }
