@@ -45,7 +45,7 @@ impl InstructionContent for RemoveInstruction {
 }
 
 impl InstructionBytes for RemoveInstruction {
-    fn byte_sign(&self) -> u8 {
+    fn byte_sign() -> u8 {
         REMOVE_INSTRUCTION_SIGN
     }
 
@@ -55,7 +55,7 @@ impl InstructionBytes for RemoveInstruction {
 
     fn to_bytes(&self) -> Vec<u8> {
         let mut bytes: Vec<u8> = Vec::with_capacity(self.byte_length());
-        bytes.push(self.byte_sign());
+        bytes.push(RemoveInstruction::byte_sign());
         bytes.extend(self.len().to_be_bytes());
         bytes
     }
@@ -123,12 +123,12 @@ mod remove_instruction_tests {
     #[test]
     fn instruction_bytes_to_bytes() {
         let mut instruction = RemoveInstruction::new(InstructionLength::MAX);
-        let mut bytes = vec![REMOVE_INSTRUCTION_SIGN];
+        let mut bytes = vec![RemoveInstruction::byte_sign()];
         bytes.extend(instruction.len().to_be_bytes());
         assert_eq!(instruction.to_bytes(), bytes);
 
         instruction = RemoveInstruction::default();
-        bytes = vec![REMOVE_INSTRUCTION_SIGN];
+        bytes = vec![RemoveInstruction::byte_sign()];
         bytes.extend(instruction.len().to_be_bytes());
         assert_eq!(instruction.to_bytes(), bytes);
     }
@@ -162,7 +162,7 @@ mod remove_instruction_tests {
             RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
             Err(InstructionError::InvalidSign)
         );
-        bytes = vec![REMOVE_INSTRUCTION_SIGN];
+        bytes = vec![RemoveInstruction::byte_sign()];
         assert_eq!(
             RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
             Err(InstructionError::MissingLength)
