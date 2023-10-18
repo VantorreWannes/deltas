@@ -1,6 +1,5 @@
-pub mod lcs;
 pub mod instructions;
-
+pub mod lcs;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

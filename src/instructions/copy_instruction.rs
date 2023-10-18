@@ -1,7 +1,9 @@
 use std::{iter::Peekable, slice::Iter};
 
-use super::{InstructionItem, InstructionLength, traits::{InstructionInfo, InstructionContent, InstructionBytes}, error::InstructionError, Result, COPY_INSTRUCTION_SIGN};
-
+use super::{
+    error::InstructionError, InstructionBytes, InstructionContent, InstructionInfo,
+    InstructionItem, InstructionLength, Result, COPY_INSTRUCTION_SIGN,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CopyInstruction {
@@ -17,7 +19,6 @@ impl CopyInstruction {
         );
         Self { content }
     }
-
 }
 
 impl InstructionInfo for CopyInstruction {
@@ -55,10 +56,10 @@ impl InstructionBytes for CopyInstruction {
 
     fn to_bytes(&self) -> Vec<u8> {
         let mut bytes: Vec<u8> = Vec::with_capacity(self.byte_length());
-            bytes.push(CopyInstruction::byte_sign());
-            bytes.extend(self.len().to_be_bytes());
-            bytes.extend(self.content.iter());
-            bytes
+        bytes.push(CopyInstruction::byte_sign());
+        bytes.extend(self.len().to_be_bytes());
+        bytes.extend(self.content.iter());
+        bytes
     }
 
     fn try_from_bytes(bytes: &mut Peekable<Iter<'_, u8>>) -> Result<Self> {
@@ -76,14 +77,14 @@ impl InstructionBytes for CopyInstruction {
             .take(std::mem::size_of::<InstructionLength>())
             .copied()
             .collect();
-        let length = InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().map_err(|_| InstructionError::InvalidLength)?);
+        let length = InstructionLength::from_be_bytes(
+            length_bytes
+                .as_slice()
+                .try_into()
+                .map_err(|_| InstructionError::InvalidLength)?,
+        );
 
-        let content_bytes: Vec<u8> = bytes
-            .take(
-                length.try_into().unwrap()
-            )
-            .copied()
-            .collect();
+        let content_bytes: Vec<u8> = bytes.take(length.try_into().unwrap()).copied().collect();
 
         let content: Result<Vec<InstructionItem>> = content_bytes
             .chunks(std::mem::size_of::<InstructionItem>())
@@ -106,14 +107,13 @@ impl InstructionBytes for CopyInstruction {
     }
 }
 
-
 impl Default for CopyInstruction {
-
     fn default() -> Self {
-        Self { content: vec![InstructionItem::default(); InstructionLength::MIN.try_into().unwrap()] }
+        Self {
+            content: vec![InstructionItem::default(); InstructionLength::MIN.try_into().unwrap()],
+        }
     }
 }
-
 
 #[cfg(test)]
 mod copy_instruction_tests {
@@ -142,7 +142,7 @@ mod copy_instruction_tests {
     #[test]
     fn instruction_content() {
         let mut instruction =
-        CopyInstruction::new(vec![
+            CopyInstruction::new(vec![
                 InstructionItem::default();
                 (InstructionLength::MAX - 1).try_into().unwrap()
             ]);

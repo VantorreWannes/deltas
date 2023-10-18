@@ -1,8 +1,7 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    error::InstructionError,
-    traits::{InstructionBytes, InstructionContent, InstructionInfo},
+    error::InstructionError, InstructionBytes, InstructionContent, InstructionInfo,
     InstructionItem, InstructionLength, Result, ADD_INSTRUCTION_SIGN,
 };
 
@@ -78,14 +77,14 @@ impl InstructionBytes for AddInstruction {
             .take(std::mem::size_of::<InstructionLength>())
             .copied()
             .collect();
-        let length = InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().map_err(|_| InstructionError::InvalidLength)?);
+        let length = InstructionLength::from_be_bytes(
+            length_bytes
+                .as_slice()
+                .try_into()
+                .map_err(|_| InstructionError::InvalidLength)?,
+        );
 
-        let content_bytes: Vec<u8> = bytes
-            .take(
-                length.try_into().unwrap()
-            )
-            .copied()
-            .collect();
+        let content_bytes: Vec<u8> = bytes.take(length.try_into().unwrap()).copied().collect();
 
         let content: Result<Vec<InstructionItem>> = content_bytes
             .chunks(std::mem::size_of::<InstructionItem>())

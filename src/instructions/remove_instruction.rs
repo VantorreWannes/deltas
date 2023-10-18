@@ -1,8 +1,7 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    error::InstructionError,
-    traits::{InstructionBytes, InstructionContent, InstructionInfo},
+    error::InstructionError, InstructionBytes, InstructionContent, InstructionInfo,
     InstructionItem, InstructionLength, Result, REMOVE_INSTRUCTION_SIGN,
 };
 
@@ -72,14 +71,16 @@ impl InstructionBytes for RemoveInstruction {
             .take(std::mem::size_of::<InstructionLength>())
             .copied()
             .collect();
-        let length = InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().map_err(|_| InstructionError::InvalidLength)?);
+        let length = InstructionLength::from_be_bytes(
+            length_bytes
+                .as_slice()
+                .try_into()
+                .map_err(|_| InstructionError::InvalidLength)?,
+        );
 
         Ok(Self { length })
-        
     }
 }
-
-
 
 impl Default for RemoveInstruction {
     fn default() -> Self {
