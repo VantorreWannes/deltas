@@ -106,12 +106,28 @@ mod remove_instruction_tests {
 
     #[test]
     fn instruction_content() {
-        todo!();
+        let mut instruction = RemoveInstruction::new(InstructionLength::MAX-1);
+        assert!(instruction.push(InstructionItem::default()).is_ok());
+        assert_eq!(instruction.push(InstructionItem::default()), Err(InstructionError::ContentOverflow));
+    }
+
+    
+    #[test]
+    fn instruction_bytes_to_bytes() {
+        let mut instruction = RemoveInstruction::new(InstructionLength::MAX);
+        let mut bytes = vec![RemoveInstruction::byte_sign()];
+        bytes.extend(instruction.len().to_be_bytes());
+        assert_eq!(instruction.to_bytes(), bytes);
+
+        instruction = RemoveInstruction::default();
+        bytes = vec![RemoveInstruction::byte_sign()];
+        bytes.extend(instruction.len().to_be_bytes());
+        assert_eq!(instruction.to_bytes(), bytes);
     }
 
     #[test]
     fn instruction_bytes_try_from_bytes_ok() {
-        todo!();
+     todo!();   
     }
 
     #[test]
