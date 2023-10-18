@@ -47,7 +47,6 @@ impl InstructionContent for AddInstruction {
 }
 
 impl InstructionBytes for AddInstruction {
-
     fn byte_sign() -> u8 {
         ADD_INSTRUCTION_SIGN
     }
@@ -70,16 +69,28 @@ impl InstructionBytes for AddInstruction {
             Some(_) => return Err(InstructionError::InvalidSign),
             None => return Err(InstructionError::MissignSign),
         };
-        let length_bytes: Vec<u8> = bytes
-            .take(std::mem::size_of::<InstructionLength>())
-            .copied()
-            .collect();
-        let length = InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().unwrap());
-        let content_bytes: Vec<u8> = bytes.take(length.try_into().map_err(|_| InstructionError::MissingLength)?).copied().collect();
-        let content: Vec<InstructionItem> = content_bytes
-            .chunks_exact(std::mem::size_of::<InstructionItem>())
-            .map(|chunk| InstructionItem::from_be_bytes(chunk.try_into().unwrap()))
-            .collect();
+        let length: InstructionLength = {
+            let length_bytes: Vec<u8> = bytes
+                .take(std::mem::size_of::<InstructionLength>())
+                .copied()
+                .collect();
+            InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().unwrap())
+        };
+
+        let content: Vec<InstructionItem> = {
+            let content_bytes: Vec<u8> = bytes
+                .take(
+                    length
+                        .try_into()
+                        .map_err(|_| InstructionError::MissingLength)?,
+                )
+                .copied()
+                .collect();
+            content_bytes
+                .chunks_exact(std::mem::size_of::<InstructionItem>())
+                .map(|chunk| InstructionItem::from_be_bytes(chunk.try_into().unwrap()))
+                .collect()
+        };
         if content.len() < length as usize {
             return Err(InstructionError::MissingContent);
         };
@@ -177,15 +188,18 @@ mod add_instruction_tests {
             AddInstruction::try_from_bytes(&mut bytes.iter().peekable()).unwrap_err(),
             InstructionError::MissignSign
         );
-        
+
         bytes = vec![0];
         assert_eq!(
             AddInstruction::try_from_bytes(&mut bytes.iter().peekable()).unwrap_err(),
             InstructionError::InvalidSign
         );
-        
+
         bytes = vec![AddInstruction::byte_sign(), InstructionLength::MAX];
-        bytes.append(&mut vec![InstructionItem::default(); InstructionLength::MAX as usize - 1]);
+        bytes.append(&mut vec![
+            InstructionItem::default();
+            InstructionLength::MAX as usize - 1
+        ]);
         assert_eq!(
             AddInstruction::try_from_bytes(&mut bytes.iter().peekable()).unwrap_err(),
             InstructionError::MissingContent
