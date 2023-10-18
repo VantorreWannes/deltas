@@ -57,7 +57,7 @@ impl InstructionBytes for AddInstruction {
 
     fn to_bytes(&self) -> Vec<u8> {
         let mut bytes: Vec<u8> = Vec::with_capacity(self.byte_length());
-        bytes.push(ADD_INSTRUCTION_SIGN);
+        bytes.push(AddInstruction::byte_sign());
         bytes.extend(self.len().to_be_bytes());
         bytes.extend(self.content.iter());
         bytes
@@ -69,31 +69,41 @@ impl InstructionBytes for AddInstruction {
             Some(_) => return Err(InstructionError::InvalidSign),
             None => return Err(InstructionError::MissignSign),
         };
-        let length: InstructionLength = {
-            let length_bytes: Vec<u8> = bytes
-                .take(std::mem::size_of::<InstructionLength>())
-                .copied()
-                .collect();
-            InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().unwrap())
-        };
 
-        let content: Vec<InstructionItem> = {
-            let content_bytes: Vec<u8> = bytes
-                .take(
-                    length
+        if bytes.peek().is_none() {
+            return Err(InstructionError::MissingLength);
+        }
+
+        let length_bytes: Vec<u8> = bytes
+            .take(std::mem::size_of::<InstructionLength>())
+            .copied()
+            .collect();
+        let length = InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().map_err(|_| InstructionError::InvalidLength)?);
+
+        let content_bytes: Vec<u8> = bytes
+            .take(
+                length.try_into().unwrap()
+            )
+            .copied()
+            .collect();
+
+        let content: Result<Vec<InstructionItem>> = content_bytes
+            .chunks(std::mem::size_of::<InstructionItem>())
+            .map(|chunk: &[u8]| -> Result<InstructionItem> {
+                Ok(InstructionItem::from_be_bytes(
+                    chunk
                         .try_into()
-                        .map_err(|_| InstructionError::MissingLength)?,
-                )
-                .copied()
-                .collect();
-            content_bytes
-                .chunks_exact(std::mem::size_of::<InstructionItem>())
-                .map(|chunk| InstructionItem::from_be_bytes(chunk.try_into().unwrap()))
-                .collect()
-        };
+                        .map_err(|_| InstructionError::InvalidContent)?,
+                ))
+            })
+            .collect();
+
+        let content = content?;
+
         if content.len() < length as usize {
             return Err(InstructionError::MissingContent);
-        };
+        }
+
         Ok(Self { content })
     }
 }

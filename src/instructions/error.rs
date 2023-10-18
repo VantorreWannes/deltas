@@ -2,7 +2,9 @@ use std::error::Error;
 
 use crate::instructions::InstructionLength;
 
-use super::{ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN};
+use super::{
+    InstructionItem, ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum InstructionError {
@@ -10,7 +12,9 @@ pub enum InstructionError {
     MissignSign,
     InvalidSign,
     MissingLength,
+    InvalidLength,
     MissingContent,
+    InvalidContent,
 }
 
 impl std::fmt::Display for InstructionError {
@@ -30,7 +34,19 @@ impl std::fmt::Display for InstructionError {
                 REMOVE_INSTRUCTION_SIGN, ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN
             ),
             InstructionError::MissingLength => write!(f, "No length value found"),
-            InstructionError::MissingContent => write!(f, "Not enough bytes found to match the given length"),
+            InstructionError::MissingContent => {
+                write!(f, "Not enough bytes found to match the given length")
+            }
+            InstructionError::InvalidLength => write!(
+                f,
+                "Not enough bytes found to create a length of type {}",
+                std::any::type_name::<InstructionLength>()
+            ),
+            InstructionError::InvalidContent => write!(
+                f,
+                "Not enough bytes found to create an item item of type {}",
+                std::any::type_name::<InstructionItem>()
+            ),
         }
     }
 }

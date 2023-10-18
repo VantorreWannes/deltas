@@ -1,3 +1,5 @@
+use std::{iter::Peekable, slice::Iter};
+
 use super::{
     error::InstructionError,
     traits::{InstructionBytes, InstructionContent, InstructionInfo},
@@ -55,33 +57,29 @@ impl InstructionBytes for RemoveInstruction {
         bytes
     }
 
-    fn try_from_bytes(bytes: &mut std::iter::Peekable<std::slice::Iter<'_, u8>>) -> Result<Self>
-    where
-        Self: Sized,
-    {
+    fn try_from_bytes(bytes: &mut Peekable<Iter<'_, u8>>) -> Result<Self> {
         match bytes.next() {
             Some(&REMOVE_INSTRUCTION_SIGN) => (),
             Some(_) => return Err(InstructionError::InvalidSign),
             None => return Err(InstructionError::MissignSign),
         };
+
         if bytes.peek().is_none() {
             return Err(InstructionError::MissingLength);
         }
-        let length: InstructionLength = {
-            let length_bytes: Vec<u8> = bytes
-                .take(std::mem::size_of::<InstructionLength>())
-                .copied()
-                .collect();
-            InstructionLength::from_be_bytes(
-                length_bytes
-                    .as_slice()
-                    .try_into()
-                    .map_err(|_| InstructionError::MissingLength)?,
-            )
-        };
+
+        let length_bytes: Vec<u8> = bytes
+            .take(std::mem::size_of::<InstructionLength>())
+            .copied()
+            .collect();
+        let length = InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().map_err(|_| InstructionError::InvalidLength)?);
+
         Ok(Self { length })
+        
     }
 }
+
+
 
 impl Default for RemoveInstruction {
     fn default() -> Self {
