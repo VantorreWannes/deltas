@@ -70,3 +70,30 @@ impl InstructionBytes for RemoveInstruction {
     }
 }
 
+
+#[cfg(test)]
+mod remove_instruction_tests {
+    use super::*;
+
+    #[test]
+    fn instruction_info() {
+        todo!();
+    }
+
+    #[test]
+    fn instruction_content() {
+        todo!();
+    }
+
+    #[test]
+    fn instruction_bytes_try_from_bytes_ok() {
+       todo!();
+    }
+
+    #[test]
+    fn instruction_bytes_try_from_bytes_err() {
+        todo!();
+    }
+}
+
+
