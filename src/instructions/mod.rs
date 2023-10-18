@@ -2,7 +2,7 @@ use std::error::Error;
 
 mod add_instruction;
 mod copy_instruction;
-pub mod instruction;
+pub mod delta_instruction;
 mod remove_instruction;
 
 type InstructionItem = u8;
