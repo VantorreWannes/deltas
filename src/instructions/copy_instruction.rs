@@ -8,6 +8,11 @@ pub struct CopyInstruction {
 
 impl CopyInstruction {
     pub fn new(content: Vec<InstructionItem>) -> Self {
+        assert!(
+            content.len() <= InstructionLength::MAX.try_into().unwrap(),
+            "Instruction content exceeded {} items",
+            InstructionLength::MAX
+        );
         Self { content }
     }
 

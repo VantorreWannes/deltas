@@ -13,9 +13,9 @@ pub struct AddInstruction {
 
 impl AddInstruction {
     pub fn new(content: Vec<InstructionItem>) -> Self {
-        debug_assert!(
+        assert!(
             content.len() <= InstructionLength::MAX.try_into().unwrap(),
-            "Instruction content exceeds {} bytes",
+            "Instruction content exceeded {} items",
             InstructionLength::MAX
         );
         Self { content }
