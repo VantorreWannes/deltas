@@ -24,7 +24,7 @@ pub trait InstructionInfo {
 
     fn is_full(&self) -> bool;
 
-    fn non_default_item_count(&self) -> InstructionLength;
+    fn non_default_item_count(&self) -> Option<InstructionLength>;
 }
 
 pub trait InstructionContent {

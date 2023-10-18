@@ -34,11 +34,13 @@ impl InstructionInfo for CopyInstruction {
         self.len() == InstructionLength::MAX
     }
 
-    fn non_default_item_count(&self) -> InstructionLength {
-        self.content
-            .iter()
-            .filter(|item| **item != InstructionItem::default())
-            .count() as InstructionLength
+    fn non_default_item_count(&self) -> Option<InstructionLength> {
+        Some(
+            self.content
+                .iter()
+                .filter(|item| **item != InstructionItem::default())
+                .count() as InstructionLength,
+        )
     }
 }
 

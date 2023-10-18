@@ -29,8 +29,8 @@ impl InstructionInfo for RemoveInstruction {
         self.len() == InstructionLength::MAX
     }
 
-    fn non_default_item_count(&self) -> InstructionLength {
-        return 0;
+    fn non_default_item_count(&self) -> Option<InstructionLength> {
+        return None;
     }
 }
 
