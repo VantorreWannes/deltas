@@ -111,6 +111,20 @@ mod add_instruction_tests {
 
         instruction = AddInstruction::default();
         assert_eq!(instruction.len(), InstructionLength::MIN);
-        assert!(instruction.is_empty()); 
+        assert!(instruction.is_empty());
     }
+
+    #[test]
+    fn instruction_content() {
+        let mut instruction =
+            AddInstruction::new(vec![
+                InstructionItem::default();
+                (InstructionLength::MAX - 1).try_into().unwrap()
+            ]);
+        assert!(instruction.push(InstructionItem::default()).is_ok());
+        assert!(instruction
+            .push(InstructionItem::default())
+            .is_err_and(|err| err == InstructionError::ContentOverflow));
+    }
+
 }
