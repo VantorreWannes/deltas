@@ -1,4 +1,8 @@
-use super::{InstructionItem, traits::{InstructionInfo, InstructionBytes, InstructionContent}, InstructionLength, Result, ADD_INSTRUCTION_SIGN, error::InstructionError};
+use super::{
+    error::InstructionError,
+    traits::{InstructionBytes, InstructionContent, InstructionInfo},
+    InstructionItem, InstructionLength, Result, ADD_INSTRUCTION_SIGN,
+};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct AddInstruction {
@@ -7,6 +11,11 @@ pub struct AddInstruction {
 
 impl AddInstruction {
     pub fn new(content: Vec<InstructionItem>) -> Self {
+        debug_assert!(
+            content.len() <= InstructionLength::MAX.try_into().unwrap(),
+            "Instruction content exceeds {} bytes",
+            InstructionLength::MAX
+        );
         Self { content }
     }
 }
@@ -52,4 +61,3 @@ impl InstructionBytes for AddInstruction {
         todo!()
     }
 }
-
