@@ -127,7 +127,13 @@ mod remove_instruction_tests {
 
     #[test]
     fn instruction_bytes_try_from_bytes_ok() {
-     todo!();   
+        let mut instruction = RemoveInstruction::new(InstructionLength::MAX);
+        let mut bytes = instruction.to_bytes();
+        assert_eq!(RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()), Ok(instruction));
+
+        instruction = RemoveInstruction::default();
+        bytes = instruction.to_bytes();
+        assert_eq!(RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()), Ok(instruction));
     }
 
     #[test]
