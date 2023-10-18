@@ -30,7 +30,7 @@ impl InstructionInfo for RemoveInstruction {
     }
 
     fn non_default_item_count(&self) -> Option<InstructionLength> {
-        return None;
+        None
     }
 }
 
