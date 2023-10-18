@@ -47,11 +47,26 @@ impl InstructionBytes for RemoveInstruction {
     }
 
     fn to_bytes(&self) -> Vec<u8> {
-        todo!()
+        let mut bytes: Vec<u8> = Vec::with_capacity(self.byte_length());
+        bytes.push(RemoveInstruction::byte_sign());
+        bytes.extend(self.len().to_be_bytes());
+        bytes
     }
 
     fn try_from_bytes(bytes: &mut  std::iter::Peekable<std::slice::Iter<'_, u8>>) -> Result<Self> where Self: Sized {
-        todo!()
+        match bytes.next() {
+            Some(&REMOVE_INSTRUCTION_SIGN) => (),
+            Some(_) => return Err(InstructionError::InvalidSign),
+            None => return Err(InstructionError::MissignSign),
+        };
+        let length: InstructionLength = {
+            let length_bytes: Vec<u8> = bytes
+                .take(std::mem::size_of::<InstructionLength>())
+                .copied()
+                .collect();
+            InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().map_err(|_| InstructionError::MissingLength)?)
+        };
+        Ok(Self { length })
     }
 }
 
