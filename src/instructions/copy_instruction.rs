@@ -55,7 +55,7 @@ impl InstructionContent for CopyInstruction {
 }
 
 impl InstructionBytes for CopyInstruction {
-    fn byte_sign() -> u8 {
+    fn byte_sign(&self) -> u8 {
         COPY_INSTRUCTION_SIGN
     }
 
@@ -65,7 +65,7 @@ impl InstructionBytes for CopyInstruction {
 
     fn to_bytes(&self) -> Vec<u8> {
         let mut bytes: Vec<u8> = Vec::with_capacity(self.byte_length());
-        bytes.push(CopyInstruction::byte_sign());
+        bytes.push(self.byte_sign());
         bytes.extend(self.len().to_be_bytes());
         bytes.extend(self.content.iter());
         bytes
@@ -167,13 +167,13 @@ mod copy_instruction_tests {
             InstructionItem::default();
             InstructionLength::MAX.try_into().unwrap()
         ]);
-        let mut bytes = vec![CopyInstruction::byte_sign()];
+        let mut bytes = vec![COPY_INSTRUCTION_SIGN];
         bytes.extend(instruction.len().to_be_bytes());
         bytes.extend(instruction.content.iter());
         assert_eq!(instruction.to_bytes(), bytes);
 
         instruction = CopyInstruction::default();
-        bytes = vec![CopyInstruction::byte_sign()];
+        bytes = vec![COPY_INSTRUCTION_SIGN];
         bytes.extend(instruction.len().to_be_bytes());
         assert_eq!(instruction.to_bytes(), bytes);
     }
@@ -211,7 +211,7 @@ mod copy_instruction_tests {
             InstructionError::InvalidSign
         );
 
-        bytes = vec![CopyInstruction::byte_sign(), InstructionLength::MAX];
+        bytes = vec![COPY_INSTRUCTION_SIGN, InstructionLength::MAX];
         bytes.append(&mut vec![
             InstructionItem::default();
             InstructionLength::MAX as usize - 1
