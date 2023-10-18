@@ -1,6 +1,6 @@
 use super::{InstructionLength, traits::{InstructionInfo, InstructionContent, InstructionBytes}, InstructionItem, error::InstructionError, Result, REMOVE_INSTRUCTION_SIGN};
 
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct RemoveInstruction {
     length: InstructionLength,
 }
@@ -67,6 +67,12 @@ impl InstructionBytes for RemoveInstruction {
             InstructionLength::from_be_bytes(length_bytes.as_slice().try_into().map_err(|_| InstructionError::MissingLength)?)
         };
         Ok(Self { length })
+    }
+}
+
+impl Default for RemoveInstruction {
+    fn default() -> Self {
+        Self::new(InstructionLength::MIN)
     }
 }
 
