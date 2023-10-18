@@ -48,7 +48,7 @@ impl InstructionContent for AddInstruction {
 
 impl InstructionBytes for AddInstruction {
     fn byte_length(&self) -> usize {
-        usize::try_from(self.len()).unwrap() + 2
+        usize::try_from(self.len()).unwrap() + std::mem::size_of::<InstructionLength>() + 1
     }
 
     fn to_bytes(&self) -> Vec<u8> {
@@ -127,4 +127,21 @@ mod add_instruction_tests {
             .is_err_and(|err| err == InstructionError::ContentOverflow));
     }
 
+    
+    #[test]
+    fn instruction_bytes() {
+        let mut instruction = AddInstruction::new(vec![
+            InstructionItem::default();
+            InstructionLength::MAX.try_into().unwrap()
+        ]);
+        let mut bytes = vec![ADD_INSTRUCTION_SIGN];
+        bytes.extend(instruction.len().to_be_bytes());
+        bytes.extend(instruction.content.iter());
+        assert_eq!(instruction.to_bytes(), bytes);
+
+        instruction = AddInstruction::default();
+        bytes = vec![ADD_INSTRUCTION_SIGN];
+        bytes.extend(instruction.len().to_be_bytes());
+        assert_eq!(instruction.to_bytes(), bytes);
+        }
 }
