@@ -21,6 +21,6 @@ pub trait InstructionBytes {
 
     fn to_bytes(&self) -> Vec<u8>;
 
-    fn try_from_bytes(bytes: Peekable<Iter<'_, u8>>) -> Result<Self> where Self: Sized;
+    fn try_from_bytes(bytes: &mut  Peekable<Iter<'_, u8>>) -> Result<Self> where Self: Sized;
 
 }

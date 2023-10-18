@@ -1,3 +1,5 @@
+use std::{iter::Peekable, slice::Iter};
+
 use super::{
     error::InstructionError,
     traits::{InstructionBytes, InstructionContent, InstructionInfo},
@@ -57,7 +59,15 @@ impl InstructionBytes for AddInstruction {
         bytes
     }
 
-    fn try_from_bytes(bytes: std::iter::Peekable<std::slice::Iter<'_, u8>>) -> Result<Self> {
-        todo!()
+    fn try_from_bytes(bytes: &mut Peekable<Iter<'_, u8>>) -> Result<Self> {
+        if !bytes.next().is_some_and(|byte| *byte == ADD_INSTRUCTION_SIGN) {
+            return Err(InstructionError::InvalidSign);
+        }
+        let length_bytes: Vec<u8> = bytes.take(std::mem::size_of::<InstructionItem>()).copied().collect();
+        let length = InstructionItem::from_be_bytes(length_bytes.as_slice().try_into().unwrap());
+        let content = bytes.take(length.try_into().unwrap()).copied().collect();
+        Ok(Self {
+            content,
+        })
     }
 }
