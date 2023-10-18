@@ -28,6 +28,10 @@ impl InstructionInfo for RemoveInstruction {
     fn is_full(&self) -> bool {
         self.len() == InstructionLength::MAX
     }
+
+    fn non_default_item_count(&self) -> InstructionLength {
+        return 0;
+    }
 }
 
 impl InstructionContent for RemoveInstruction {
