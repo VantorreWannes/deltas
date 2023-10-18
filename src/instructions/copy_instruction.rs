@@ -1,8 +1,8 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    error::InstructionError, InstructionBytes, InstructionContent, InstructionInfo,
-    InstructionItem, InstructionLength, Result, COPY_INSTRUCTION_SIGN,
+    InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionItem,
+    InstructionLength, Result, COPY_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]

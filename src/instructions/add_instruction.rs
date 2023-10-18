@@ -1,7 +1,7 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    error::InstructionError, InstructionBytes, InstructionContent, InstructionInfo,
+    InstructionError, InstructionBytes, InstructionContent, InstructionInfo,
     InstructionItem, InstructionLength, Result, ADD_INSTRUCTION_SIGN,
 };
 
