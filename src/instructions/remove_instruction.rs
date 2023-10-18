@@ -59,7 +59,11 @@ impl InstructionBytes for RemoveInstruction {
     where
         Self: Sized,
     {
-        todo!("Check for correct sign using .take() and std::mem::size_of()");
+        match bytes.next() {
+            Some(&REMOVE_INSTRUCTION_SIGN) => (),
+            Some(_) => return Err(InstructionError::InvalidSign),
+            None => return Err(InstructionError::MissignSign),
+        };
         if bytes.peek().is_none() {
             return Err(InstructionError::MissingLength);
         }
@@ -153,7 +157,12 @@ mod remove_instruction_tests {
         bytes = vec![InstructionItem::default()];
         assert_eq!(
             RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
-            Err(InstructionError::MissignSign)
+            Err(InstructionError::InvalidSign)
+        );
+        bytes = vec![RemoveInstruction::byte_sign()];
+        assert_eq!(
+            RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
+            Err(InstructionError::MissingLength)
         );
     }
 }
