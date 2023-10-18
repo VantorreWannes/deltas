@@ -17,6 +17,8 @@ pub trait InstructionContent {
 }
 pub trait InstructionBytes {
 
+    fn byte_sign(&self) -> u8;
+
     fn byte_length(&self) -> usize;
 
     fn to_bytes(&self) -> Vec<u8>;
