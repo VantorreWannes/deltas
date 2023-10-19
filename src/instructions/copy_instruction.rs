@@ -152,6 +152,15 @@ impl TryFrom<Peekable<Iter<'_, u8>>> for CopyInstruction {
     }
 }
 
+impl TryFrom<Vec<u8>> for CopyInstruction {
+    type Error = InstructionError;
+
+    fn try_from(value: Vec<u8>) -> std::result::Result<Self, Self::Error> {
+        CopyInstruction::try_from_bytes(&mut value.iter().peekable())
+    }
+
+}
+
 #[cfg(test)]
 mod copy_instruction_tests {
     use super::*;
