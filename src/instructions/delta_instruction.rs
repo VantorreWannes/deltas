@@ -157,6 +157,15 @@ impl TryFrom<Vec<u8>> for DeltaInstruction {
     }
 }
 
+
+impl TryFrom<&[u8]> for DeltaInstruction {
+    type Error = InstructionError;
+
+    fn try_from(value: &[u8]) -> std::result::Result<Self, Self::Error> {
+        DeltaInstruction::try_from_bytes(&mut value.iter().peekable())
+    }
+}
+
 #[cfg(test)]
 mod delta_instruction_tests {
     use crate::instructions::InstructionItem;

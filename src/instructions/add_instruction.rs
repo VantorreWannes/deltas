@@ -162,6 +162,14 @@ impl TryFrom<Vec<u8>> for AddInstruction {
     }
 }
 
+impl TryFrom<&[u8]> for AddInstruction {
+    type Error = InstructionError;
+
+    fn try_from(value: &[u8]) -> std::result::Result<Self, Self::Error> {
+        AddInstruction::try_from_bytes(&mut value.iter().peekable())
+    }
+}
+
 #[cfg(test)]
 mod add_instruction_tests {
     use super::*;
