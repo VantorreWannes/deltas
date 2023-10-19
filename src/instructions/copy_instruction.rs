@@ -247,9 +247,12 @@ mod copy_instruction_tests {
             &mut source.iter().peekable(),
             &mut target.iter().peekable(),
         );
-        dbg!(&instruction.content, instruction.non_default_item_count().unwrap(), instruction.treshold());
+        dbg!(
+            &instruction.content,
+            instruction.non_default_item_count().unwrap(),
+            instruction.treshold()
+        );
         assert!(instruction.non_default_item_count().unwrap() <= instruction.treshold() + 1);
-        
     }
 
     #[test]

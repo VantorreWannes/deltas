@@ -227,10 +227,8 @@ mod add_instruction_tests {
 
     #[test]
     fn instruction_content_fill() {
-        let target =
-            vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
-        let lcs =
-            vec![InstructionItem::default() + 1; InstructionLength::MAX.try_into().unwrap()];
+        let target = vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
+        let lcs = vec![InstructionItem::default() + 1; InstructionLength::MAX.try_into().unwrap()];
         let source: Vec<InstructionItem> = vec![];
         let mut instruction = AddInstruction::default();
         instruction.fill(

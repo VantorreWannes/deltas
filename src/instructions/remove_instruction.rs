@@ -1,8 +1,8 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    InstructionError, InstructionBytes, InstructionContent, InstructionInfo,
-    InstructionItem, InstructionLength, Result, REMOVE_INSTRUCTION_SIGN,
+    InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionItem,
+    InstructionLength, Result, REMOVE_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -110,7 +110,6 @@ impl Default for RemoveInstruction {
     }
 }
 
-
 impl From<&RemoveInstruction> for Vec<u8> {
     fn from(value: &RemoveInstruction) -> Self {
         value.to_bytes()
@@ -146,7 +145,6 @@ impl TryFrom<Vec<u8>> for RemoveInstruction {
         RemoveInstruction::try_from_bytes(&mut value.iter().peekable())
     }
 }
-
 
 impl TryFrom<&[u8]> for RemoveInstruction {
     type Error = InstructionError;
@@ -186,10 +184,8 @@ mod remove_instruction_tests {
 
     #[test]
     fn instruction_content_fill() {
-        let source =
-            vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
-        let lcs =
-            vec![InstructionItem::default() + 1; InstructionLength::MAX.try_into().unwrap()];
+        let source = vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
+        let lcs = vec![InstructionItem::default() + 1; InstructionLength::MAX.try_into().unwrap()];
         let target: Vec<InstructionItem> = vec![];
         let mut instruction = RemoveInstruction::default();
         instruction.fill(
@@ -198,9 +194,11 @@ mod remove_instruction_tests {
             &mut target.iter().peekable(),
         );
         assert!(instruction.is_full());
-        assert_eq!(instruction.length as InstructionLength, source.len() as InstructionLength);
+        assert_eq!(
+            instruction.length as InstructionLength,
+            source.len() as InstructionLength
+        );
     }
-
 
     #[test]
     fn instruction_bytes_to_bytes() {
