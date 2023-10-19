@@ -42,6 +42,24 @@ impl InstructionContent for RemoveInstruction {
         self.length += 1;
         Ok(())
     }
+
+    fn fill(
+        &mut self,
+        lcs: &mut super::InstructionItemIter,
+        source: &mut super::InstructionItemIter,
+        _: &mut super::InstructionItemIter,
+    ) {
+        let mut source_item = source.peek();
+        let lcs_item = lcs.peek();
+        while lcs_item.is_some()
+            && source_item.is_some()
+            && lcs_item != source_item
+            && !self.is_full()
+        {
+            self.push(*source.next().unwrap()).unwrap();
+            source_item = source.peek();
+        }
+    }
 }
 
 impl InstructionBytes for RemoveInstruction {
@@ -157,7 +175,7 @@ mod remove_instruction_tests {
     }
 
     #[test]
-    fn instruction_content() {
+    fn instruction_content_push() {
         let mut instruction = RemoveInstruction::new(InstructionLength::MAX - 1);
         assert!(instruction.push(InstructionItem::default()).is_ok());
         assert_eq!(
@@ -165,6 +183,24 @@ mod remove_instruction_tests {
             Err(InstructionError::ContentOverflow)
         );
     }
+
+    #[test]
+    fn instruction_content_fill() {
+        let source =
+            vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
+        let lcs =
+            vec![InstructionItem::default() + 1; InstructionLength::MAX.try_into().unwrap()];
+        let target: Vec<InstructionItem> = vec![];
+        let mut instruction = RemoveInstruction::default();
+        instruction.fill(
+            &mut lcs.iter().peekable(),
+            &mut source.iter().peekable(),
+            &mut target.iter().peekable(),
+        );
+        assert!(instruction.is_full());
+        assert_eq!(instruction.length as InstructionLength, source.len() as InstructionLength);
+    }
+
 
     #[test]
     fn instruction_bytes_to_bytes() {
