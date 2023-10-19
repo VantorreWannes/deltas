@@ -18,7 +18,7 @@ impl RemoveInstruction {
 
 impl InstructionInfo for RemoveInstruction {
     fn len(&self) -> InstructionLength {
-        self.length.try_into().unwrap()
+        self.length
     }
 
     fn is_empty(&self) -> bool {

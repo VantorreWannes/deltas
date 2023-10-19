@@ -1,6 +1,9 @@
+use std::{iter::Peekable, slice::Iter};
+
 use super::{
     add_instruction::AddInstruction, copy_instruction::CopyInstruction,
-    remove_instruction::RemoveInstruction, InstructionContent, InstructionInfo, Result, InstructionBytes, ADD_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN,
+    remove_instruction::RemoveInstruction, InstructionBytes, InstructionContent, InstructionInfo,
+    Result, ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN, InstructionError,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -89,5 +92,77 @@ impl InstructionBytes for DeltaInstruction {
             None => Err(super::InstructionError::MissignSign),
             _ => Err(super::InstructionError::InvalidSign),
         }
+    }
+}
+
+impl From<RemoveInstruction> for DeltaInstruction {
+    fn from(instruction: RemoveInstruction) -> Self {
+        DeltaInstruction::Remove(instruction)
+    }
+}
+
+impl From<AddInstruction> for DeltaInstruction {
+    fn from(instruction: AddInstruction) -> Self {
+        DeltaInstruction::Add(instruction)
+    }
+}
+
+impl From<CopyInstruction> for DeltaInstruction {
+    fn from(instruction: CopyInstruction) -> Self {
+        DeltaInstruction::Copy(instruction)
+    }
+}
+
+
+impl From<&DeltaInstruction> for Vec<u8> {
+    fn from(value: &DeltaInstruction) -> Self {
+        value.to_bytes()
+    }
+}
+
+impl From<DeltaInstruction> for Vec<u8> {
+    fn from(value: DeltaInstruction) -> Self {
+        value.to_bytes()
+    }
+}
+
+impl TryFrom<&mut Peekable<Iter<'_, u8>>> for DeltaInstruction {
+    type Error = InstructionError;
+
+    fn try_from(value: &mut Peekable<Iter<'_, u8>>) -> std::result::Result<Self, Self::Error> {
+        DeltaInstruction::try_from_bytes(value)
+    }
+}
+
+impl TryFrom<Peekable<Iter<'_, u8>>> for DeltaInstruction {
+    type Error = InstructionError;
+
+    fn try_from(mut value: Peekable<Iter<'_, u8>>) -> std::result::Result<Self, Self::Error> {
+        DeltaInstruction::try_from_bytes(&mut value)
+    }
+}
+
+impl TryFrom<Vec<u8>> for DeltaInstruction {
+    type Error = InstructionError;
+
+    fn try_from(value: Vec<u8>) -> std::result::Result<Self, Self::Error> {
+        DeltaInstruction::try_from_bytes(&mut value.iter().peekable())
+    }
+}
+
+#[cfg(test)]
+mod delta_instruction_tests {
+    use crate::instructions::{self, InstructionLength};
+
+    use super::*;
+
+    #[test]
+    fn into() {
+        let remove_instruction = RemoveInstruction::default();
+        let add_instruction = AddInstruction::default();
+        let copy_instruction = CopyInstruction::default();
+        assert_eq!(DeltaInstruction::from(remove_instruction.clone()), DeltaInstruction::Remove(remove_instruction));
+        assert_eq!(DeltaInstruction::from(add_instruction.clone()), DeltaInstruction::Add(add_instruction));
+        assert_eq!(DeltaInstruction::from(copy_instruction.clone()), DeltaInstruction::Copy(copy_instruction));
     }
 }
