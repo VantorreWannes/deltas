@@ -125,6 +125,43 @@ impl Default for AddInstruction {
     }
 }
 
+
+impl From<&AddInstruction> for Vec<u8> {
+    fn from(value: &AddInstruction) -> Self {
+        value.to_bytes()
+    }
+}
+
+impl From<AddInstruction> for Vec<u8> {
+    fn from(value: AddInstruction) -> Self {
+        value.to_bytes()
+    }
+}
+
+impl TryFrom<&mut Peekable<Iter<'_, u8>>> for AddInstruction {
+    type Error = InstructionError;
+
+    fn try_from(value: &mut Peekable<Iter<'_, u8>>) -> std::result::Result<Self, Self::Error> {
+        AddInstruction::try_from_bytes(value)
+    }
+}
+
+impl TryFrom<Peekable<Iter<'_, u8>>> for AddInstruction {
+    type Error = InstructionError;
+
+    fn try_from(mut value: Peekable<Iter<'_, u8>>) -> std::result::Result<Self, Self::Error> {
+        AddInstruction::try_from_bytes(&mut value)
+    }
+}
+
+impl TryFrom<Vec<u8>> for AddInstruction {
+    type Error = InstructionError;
+
+    fn try_from(value: Vec<u8>) -> std::result::Result<Self, Self::Error> {
+        AddInstruction::try_from_bytes(&mut value.iter().peekable())
+    }
+}
+
 #[cfg(test)]
 mod add_instruction_tests {
     use super::*;
