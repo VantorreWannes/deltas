@@ -1,6 +1,7 @@
 use super::{
     add_instruction::AddInstruction, copy_instruction::CopyInstruction,
-    remove_instruction::RemoveInstruction, InstructionContent, InstructionInfo, Result, InstructionBytes, ADD_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN,
+    remove_instruction::RemoveInstruction, InstructionBytes, InstructionContent, InstructionInfo,
+    Result, ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -81,13 +82,38 @@ impl InstructionBytes for DeltaInstruction {
 
     fn try_from_bytes(bytes: &mut std::iter::Peekable<std::slice::Iter<'_, u8>>) -> Result<Self>
     where
-        Self: Sized {
+        Self: Sized,
+    {
         match bytes.peek() {
-            Some(&&ADD_INSTRUCTION_SIGN) => Ok(DeltaInstruction::Add(AddInstruction::try_from_bytes(bytes)?)),
-            Some(&&REMOVE_INSTRUCTION_SIGN) => Ok(DeltaInstruction::Remove(RemoveInstruction::try_from_bytes(bytes)?)),
-            Some(&&COPY_INSTRUCTION_SIGN) =>  Ok(DeltaInstruction::Copy(CopyInstruction::try_from_bytes(bytes)?)),
+            Some(&&ADD_INSTRUCTION_SIGN) => Ok(DeltaInstruction::Add(
+                AddInstruction::try_from_bytes(bytes)?,
+            )),
+            Some(&&REMOVE_INSTRUCTION_SIGN) => Ok(DeltaInstruction::Remove(
+                RemoveInstruction::try_from_bytes(bytes)?,
+            )),
+            Some(&&COPY_INSTRUCTION_SIGN) => Ok(DeltaInstruction::Copy(
+                CopyInstruction::try_from_bytes(bytes)?,
+            )),
             None => Err(super::InstructionError::MissignSign),
             _ => Err(super::InstructionError::InvalidSign),
         }
+    }
+}
+
+impl From<RemoveInstruction> for DeltaInstruction {
+    fn from(instruction: RemoveInstruction) -> Self {
+        DeltaInstruction::Remove(instruction)
+    }
+}
+
+impl From<AddInstruction> for DeltaInstruction {
+    fn from(instruction: AddInstruction) -> Self {
+        DeltaInstruction::Add(instruction)
+    }
+}
+
+impl From<CopyInstruction> for DeltaInstruction {
+    fn from(instruction: CopyInstruction) -> Self {
+        DeltaInstruction::Copy(instruction)
     }
 }
