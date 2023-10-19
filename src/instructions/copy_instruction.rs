@@ -124,6 +124,34 @@ impl Default for CopyInstruction {
     }
 }
 
+impl From<&CopyInstruction> for Vec<u8> {
+    fn from(value: &CopyInstruction) -> Self {
+        value.to_bytes()
+    }
+}
+
+impl From<CopyInstruction> for Vec<u8> {
+    fn from(value: CopyInstruction) -> Self {
+        value.to_bytes()
+    }
+}
+
+impl TryFrom<&mut Peekable<Iter<'_, u8>>> for CopyInstruction {
+    type Error = InstructionError;
+
+    fn try_from(value: &mut Peekable<Iter<'_, u8>>) -> std::result::Result<Self, Self::Error> {
+        CopyInstruction::try_from_bytes(value)
+    }
+}
+
+impl TryFrom<Peekable<Iter<'_, u8>>> for CopyInstruction {
+    type Error = InstructionError;
+
+    fn try_from(mut value: Peekable<Iter<'_, u8>>) -> std::result::Result<Self, Self::Error> {
+        CopyInstruction::try_from_bytes(&mut value)
+    }
+}
+
 #[cfg(test)]
 mod copy_instruction_tests {
     use super::*;
