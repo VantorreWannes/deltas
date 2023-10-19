@@ -56,21 +56,20 @@ impl InstructionContent for AddInstruction {
     fn fill(
         &mut self,
         lcs: &mut super::InstructionItemIter,
-        source: &mut super::InstructionItemIter,
+        _: &mut super::InstructionItemIter,
         target: &mut super::InstructionItemIter,
     ) {
         let mut target_item = target.peek();
         let mut lcs_item = lcs.peek();
         while lcs_item.is_some()
             && target_item.is_some()
-            && lcs_item == target_item
+            && lcs_item != target_item
             && !self.is_full()
         {
-            self.push(*target.next().unwrap());
+            self.push(*target.next().unwrap()).unwrap();
             target_item = target.peek();
             lcs_item = lcs.peek();
         }
-        todo!();
     }
 }
 
@@ -215,7 +214,7 @@ mod add_instruction_tests {
     }
 
     #[test]
-    fn instruction_content() {
+    fn instruction_content_push() {
         let mut instruction =
             AddInstruction::new(vec![
                 InstructionItem::default();
@@ -225,6 +224,23 @@ mod add_instruction_tests {
         assert!(instruction
             .push(InstructionItem::default())
             .is_err_and(|err| err == InstructionError::ContentOverflow));
+    }
+
+    #[test]
+    fn instruction_content_fill() {
+        let target =
+            vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
+        let lcs =
+            vec![InstructionItem::default() + 1; InstructionLength::MAX.try_into().unwrap()];
+        let source: Vec<InstructionItem> = vec![];
+        let mut instruction = AddInstruction::default();
+        instruction.fill(
+            &mut lcs.iter().peekable(),
+            &mut source.iter().peekable(),
+            &mut target.iter().peekable(),
+        );
+        assert!(instruction.is_full());
+        assert_eq!(instruction.content, target);
     }
 
     #[test]
