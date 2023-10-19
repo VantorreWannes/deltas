@@ -35,7 +35,7 @@ pub trait InstructionContent {
         lcs: &mut InstructionItemIter,
         source: &mut InstructionItemIter,
         target: &mut InstructionItemIter,
-    ) -> Result<()>;
+    );
 }
 pub trait InstructionBytes {
     fn byte_sign(&self) -> u8;
