@@ -10,9 +10,9 @@ type InstructionLength = u8;
 
 type Result<T> = std::result::Result<T, InstructionError>;
 
-const REMOVE_INSTRUCTION_SIGN: InstructionItem = b'-';
-const ADD_INSTRUCTION_SIGN: InstructionItem = b'+';
-const COPY_INSTRUCTION_SIGN: InstructionItem = b'|';
+const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
+const ADD_INSTRUCTION_SIGN: u8 = b'+';
+const COPY_INSTRUCTION_SIGN: u8 = b'|';
 
 use std::{iter::Peekable, slice::Iter};
 

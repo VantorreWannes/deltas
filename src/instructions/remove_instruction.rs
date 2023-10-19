@@ -203,7 +203,7 @@ mod remove_instruction_tests {
             RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
             Err(InstructionError::MissignSign)
         );
-        bytes = vec![InstructionItem::default()];
+        bytes = vec![b'A'];
         assert_eq!(
             RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),
             Err(InstructionError::InvalidSign)

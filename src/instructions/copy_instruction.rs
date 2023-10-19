@@ -255,7 +255,8 @@ mod copy_instruction_tests {
             InstructionError::InvalidSign
         );
 
-        bytes = vec![COPY_INSTRUCTION_SIGN, InstructionLength::MAX];
+        bytes = vec![COPY_INSTRUCTION_SIGN];
+        bytes.extend(InstructionLength::MAX.to_be_bytes());
         bytes.append(&mut vec![
             InstructionItem::default();
             InstructionLength::MAX as usize - 1
