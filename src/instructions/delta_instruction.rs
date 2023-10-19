@@ -2,8 +2,8 @@ use std::{iter::Peekable, slice::Iter};
 
 use super::{
     add_instruction::AddInstruction, copy_instruction::CopyInstruction,
-    remove_instruction::RemoveInstruction, InstructionBytes, InstructionContent, InstructionInfo,
-    Result, ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN, InstructionError,
+    remove_instruction::RemoveInstruction, InstructionBytes, InstructionContent, InstructionError,
+    InstructionInfo, Result, ADD_INSTRUCTION_SIGN, COPY_INSTRUCTION_SIGN, REMOVE_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -53,6 +53,19 @@ impl InstructionContent for DeltaInstruction {
             DeltaInstruction::Remove(instruction) => instruction.push(content),
             DeltaInstruction::Add(instruction) => instruction.push(content),
             DeltaInstruction::Copy(instruction) => instruction.push(content),
+        }
+    }
+
+    fn fill(
+        &mut self,
+        lcs: &mut super::InstructionItemIter,
+        source: &mut super::InstructionItemIter,
+        target: &mut super::InstructionItemIter,
+    ) {
+        match self {
+            DeltaInstruction::Remove(instruction) => instruction.fill(lcs, source, target),
+            DeltaInstruction::Add(instruction) => instruction.fill(lcs, source, target),
+            DeltaInstruction::Copy(instruction) => instruction.fill(lcs, source, target),
         }
     }
 }
@@ -120,7 +133,6 @@ impl From<CopyInstruction> for DeltaInstruction {
     }
 }
 
-
 impl From<&DeltaInstruction> for Vec<u8> {
     fn from(value: &DeltaInstruction) -> Self {
         value.to_bytes()
@@ -157,7 +169,6 @@ impl TryFrom<Vec<u8>> for DeltaInstruction {
     }
 }
 
-
 impl TryFrom<&[u8]> for DeltaInstruction {
     type Error = InstructionError;
 
@@ -186,17 +197,41 @@ mod delta_instruction_tests {
         assert_eq!(wrapped_add_instruction.len(), add_instruction.len());
         assert_eq!(wrapped_copy_instruction.len(), copy_instruction.len());
 
-        assert_eq!(wrapped_remove_instruction.is_empty(), remove_instruction.is_empty());
-        assert_eq!(wrapped_add_instruction.is_empty(), add_instruction.is_empty());
-        assert_eq!(wrapped_copy_instruction.is_empty(), copy_instruction.is_empty());
+        assert_eq!(
+            wrapped_remove_instruction.is_empty(),
+            remove_instruction.is_empty()
+        );
+        assert_eq!(
+            wrapped_add_instruction.is_empty(),
+            add_instruction.is_empty()
+        );
+        assert_eq!(
+            wrapped_copy_instruction.is_empty(),
+            copy_instruction.is_empty()
+        );
 
-        assert_eq!(wrapped_remove_instruction.is_full(), remove_instruction.is_full());
+        assert_eq!(
+            wrapped_remove_instruction.is_full(),
+            remove_instruction.is_full()
+        );
         assert_eq!(wrapped_add_instruction.is_full(), add_instruction.is_full());
-        assert_eq!(wrapped_copy_instruction.is_full(), copy_instruction.is_full());
+        assert_eq!(
+            wrapped_copy_instruction.is_full(),
+            copy_instruction.is_full()
+        );
 
-        assert_eq!(wrapped_remove_instruction.non_default_item_count(), remove_instruction.non_default_item_count());
-        assert_eq!(wrapped_add_instruction.non_default_item_count(), add_instruction.non_default_item_count());
-        assert_eq!(wrapped_copy_instruction.non_default_item_count(), copy_instruction.non_default_item_count());
+        assert_eq!(
+            wrapped_remove_instruction.non_default_item_count(),
+            remove_instruction.non_default_item_count()
+        );
+        assert_eq!(
+            wrapped_add_instruction.non_default_item_count(),
+            add_instruction.non_default_item_count()
+        );
+        assert_eq!(
+            wrapped_copy_instruction.non_default_item_count(),
+            copy_instruction.non_default_item_count()
+        );
     }
 
     #[test]
@@ -210,9 +245,18 @@ mod delta_instruction_tests {
         let mut wrapped_copy_instruction: DeltaInstruction = CopyInstruction::default().into();
 
         let instruction_item = InstructionItem::default();
-        assert_eq!(wrapped_remove_instruction.push(instruction_item), remove_instruction.push(instruction_item));
-        assert_eq!(wrapped_add_instruction.push(instruction_item), add_instruction.push(instruction_item));
-        assert_eq!(wrapped_copy_instruction.push(instruction_item), copy_instruction.push(instruction_item));
+        assert_eq!(
+            wrapped_remove_instruction.push(instruction_item),
+            remove_instruction.push(instruction_item)
+        );
+        assert_eq!(
+            wrapped_add_instruction.push(instruction_item),
+            add_instruction.push(instruction_item)
+        );
+        assert_eq!(
+            wrapped_copy_instruction.push(instruction_item),
+            copy_instruction.push(instruction_item)
+        );
     }
 
     #[test]
@@ -225,25 +269,57 @@ mod delta_instruction_tests {
         let wrapped_add_instruction: DeltaInstruction = AddInstruction::default().into();
         let wrapped_copy_instruction: DeltaInstruction = CopyInstruction::default().into();
 
-        assert_eq!(remove_instruction.byte_sign(), wrapped_remove_instruction.byte_sign());
-        assert_eq!(add_instruction.byte_sign(), wrapped_add_instruction.byte_sign());
-        assert_eq!(copy_instruction.byte_sign(), wrapped_copy_instruction.byte_sign());
+        assert_eq!(
+            remove_instruction.byte_sign(),
+            wrapped_remove_instruction.byte_sign()
+        );
+        assert_eq!(
+            add_instruction.byte_sign(),
+            wrapped_add_instruction.byte_sign()
+        );
+        assert_eq!(
+            copy_instruction.byte_sign(),
+            wrapped_copy_instruction.byte_sign()
+        );
 
-        assert_eq!(wrapped_remove_instruction.byte_length(), remove_instruction.byte_length());
-        assert_eq!(wrapped_add_instruction.byte_length(), add_instruction.byte_length());
-        assert_eq!(wrapped_copy_instruction.byte_length(), copy_instruction.byte_length());
+        assert_eq!(
+            wrapped_remove_instruction.byte_length(),
+            remove_instruction.byte_length()
+        );
+        assert_eq!(
+            wrapped_add_instruction.byte_length(),
+            add_instruction.byte_length()
+        );
+        assert_eq!(
+            wrapped_copy_instruction.byte_length(),
+            copy_instruction.byte_length()
+        );
 
-        assert_eq!(wrapped_remove_instruction.to_bytes(), remove_instruction.to_bytes());
-        assert_eq!(wrapped_add_instruction.to_bytes(), add_instruction.to_bytes());
-        assert_eq!(wrapped_copy_instruction.to_bytes(), copy_instruction.to_bytes());
+        assert_eq!(
+            wrapped_remove_instruction.to_bytes(),
+            remove_instruction.to_bytes()
+        );
+        assert_eq!(
+            wrapped_add_instruction.to_bytes(),
+            add_instruction.to_bytes()
+        );
+        assert_eq!(
+            wrapped_copy_instruction.to_bytes(),
+            copy_instruction.to_bytes()
+        );
 
-        let remove_instruction_result: Result<RemoveInstruction> = remove_instruction.to_bytes().try_into();
+        let remove_instruction_result: Result<RemoveInstruction> =
+            remove_instruction.to_bytes().try_into();
         let add_instruction_result: Result<AddInstruction> = add_instruction.to_bytes().try_into();
-        let copy_instruction_result: Result<CopyInstruction> = copy_instruction.to_bytes().try_into();
+        let copy_instruction_result: Result<CopyInstruction> =
+            copy_instruction.to_bytes().try_into();
 
-        let wrapped_remove_instruction_result: Result<DeltaInstruction> = wrapped_remove_instruction.to_bytes().try_into();
-        let wrapped_add_instruction_result: Result<DeltaInstruction> = wrapped_add_instruction.to_bytes().try_into();
-        let wrapped_copy_instruction_result: Result<DeltaInstruction> = wrapped_copy_instruction.to_bytes().try_into();
+        let wrapped_remove_instruction_result: Result<DeltaInstruction> =
+            wrapped_remove_instruction.to_bytes().try_into();
+        let wrapped_add_instruction_result: Result<DeltaInstruction> =
+            wrapped_add_instruction.to_bytes().try_into();
+        let wrapped_copy_instruction_result: Result<DeltaInstruction> =
+            wrapped_copy_instruction.to_bytes().try_into();
 
         assert!(remove_instruction_result.is_ok());
         assert!(add_instruction_result.is_ok());
@@ -253,9 +329,18 @@ mod delta_instruction_tests {
         assert!(wrapped_add_instruction_result.is_ok());
         assert!(wrapped_copy_instruction_result.is_ok());
 
-        assert_eq!(DeltaInstruction::from(remove_instruction_result.unwrap()), wrapped_remove_instruction_result.unwrap());
-        assert_eq!(DeltaInstruction::from(add_instruction_result.unwrap()), wrapped_add_instruction_result.unwrap());
-        assert_eq!(DeltaInstruction::from(copy_instruction_result.unwrap()), wrapped_copy_instruction_result.unwrap());
+        assert_eq!(
+            DeltaInstruction::from(remove_instruction_result.unwrap()),
+            wrapped_remove_instruction_result.unwrap()
+        );
+        assert_eq!(
+            DeltaInstruction::from(add_instruction_result.unwrap()),
+            wrapped_add_instruction_result.unwrap()
+        );
+        assert_eq!(
+            DeltaInstruction::from(copy_instruction_result.unwrap()),
+            wrapped_copy_instruction_result.unwrap()
+        );
     }
 
     #[test]
@@ -263,8 +348,17 @@ mod delta_instruction_tests {
         let remove_instruction = RemoveInstruction::default();
         let add_instruction = AddInstruction::default();
         let copy_instruction = CopyInstruction::default();
-        assert_eq!(DeltaInstruction::from(remove_instruction.clone()), DeltaInstruction::Remove(remove_instruction));
-        assert_eq!(DeltaInstruction::from(add_instruction.clone()), DeltaInstruction::Add(add_instruction));
-        assert_eq!(DeltaInstruction::from(copy_instruction.clone()), DeltaInstruction::Copy(copy_instruction));
+        assert_eq!(
+            DeltaInstruction::from(remove_instruction.clone()),
+            DeltaInstruction::Remove(remove_instruction)
+        );
+        assert_eq!(
+            DeltaInstruction::from(add_instruction.clone()),
+            DeltaInstruction::Add(add_instruction)
+        );
+        assert_eq!(
+            DeltaInstruction::from(copy_instruction.clone()),
+            DeltaInstruction::Copy(copy_instruction)
+        );
     }
 }
