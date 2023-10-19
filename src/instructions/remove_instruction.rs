@@ -42,6 +42,24 @@ impl InstructionContent for RemoveInstruction {
         self.length += 1;
         Ok(())
     }
+
+    fn fill(
+        &mut self,
+        lcs: &mut super::InstructionItemIter,
+        source: &mut super::InstructionItemIter,
+        _: &mut super::InstructionItemIter,
+    ) {
+        let mut source_item = source.peek();
+        let lcs_item = lcs.peek();
+        while lcs_item.is_some()
+            && source_item.is_some()
+            && lcs_item != source_item
+            && !self.is_full()
+        {
+            self.push(*source.next().unwrap()).unwrap();
+            source_item = source.peek();
+        }
+    }
 }
 
 impl InstructionBytes for RemoveInstruction {

@@ -60,7 +60,7 @@ impl InstructionContent for AddInstruction {
         target: &mut super::InstructionItemIter,
     ) {
         let mut target_item = target.peek();
-        let mut lcs_item = lcs.peek();
+        let lcs_item = lcs.peek();
         while lcs_item.is_some()
             && target_item.is_some()
             && lcs_item != target_item
@@ -68,7 +68,6 @@ impl InstructionContent for AddInstruction {
         {
             self.push(*target.next().unwrap()).unwrap();
             target_item = target.peek();
-            lcs_item = lcs.peek();
         }
     }
 }
