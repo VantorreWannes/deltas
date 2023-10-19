@@ -15,6 +15,8 @@ const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 const ADD_INSTRUCTION_SIGN: u8 = b'+';
 const COPY_INSTRUCTION_SIGN: u8 = b'|';
 
+const NON_ZERO_MAX_COUNT_PERCENT: InstructionLength = 50;
+
 use std::{iter::Peekable, slice::Iter};
 
 pub trait InstructionInfo {
@@ -23,6 +25,10 @@ pub trait InstructionInfo {
     fn is_empty(&self) -> bool;
 
     fn is_full(&self) -> bool;
+
+    fn treshold(&self) -> InstructionLength {
+        ((self.len() as u32 * NON_ZERO_MAX_COUNT_PERCENT as u32) / 100u32) as InstructionLength
+    }
 
     fn non_default_item_count(&self) -> Option<InstructionLength>;
 }
