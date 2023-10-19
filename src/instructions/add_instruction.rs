@@ -1,8 +1,8 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    InstructionError, InstructionBytes, InstructionContent, InstructionInfo,
-    InstructionItem, InstructionLength, Result, ADD_INSTRUCTION_SIGN,
+    InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionItem,
+    InstructionLength, Result, ADD_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -51,6 +51,26 @@ impl InstructionContent for AddInstruction {
         }
         self.content.push(content);
         Ok(())
+    }
+
+    fn fill(
+        &mut self,
+        lcs: &mut super::InstructionItemIter,
+        source: &mut super::InstructionItemIter,
+        target: &mut super::InstructionItemIter,
+    ) {
+        let mut target_item = target.peek();
+        let mut lcs_item = lcs.peek();
+        while lcs_item.is_some()
+            && target_item.is_some()
+            && lcs_item == target_item
+            && !self.is_full()
+        {
+            self.push(*target.next().unwrap());
+            target_item = target.peek();
+            lcs_item = lcs.peek();
+        }
+        todo!();
     }
 }
 
@@ -124,7 +144,6 @@ impl Default for AddInstruction {
         ])
     }
 }
-
 
 impl From<&AddInstruction> for Vec<u8> {
     fn from(value: &AddInstruction) -> Self {
