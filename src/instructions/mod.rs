@@ -9,6 +9,7 @@ type InstructionItem = u8;
 type InstructionLength = u8;
 
 type Result<T> = std::result::Result<T, InstructionError>;
+type InstructionItemIter<'a> = Peekable<Iter<'a, InstructionItem>>;
 
 const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 const ADD_INSTRUCTION_SIGN: u8 = b'+';
@@ -28,6 +29,13 @@ pub trait InstructionInfo {
 
 pub trait InstructionContent {
     fn push(&mut self, content: InstructionItem) -> Result<()>;
+
+    fn fill(
+        &mut self,
+        lcs: &mut InstructionItemIter,
+        source: &mut InstructionItemIter,
+        target: &mut InstructionItemIter,
+    ) -> Result<()>;
 }
 pub trait InstructionBytes {
     fn byte_sign(&self) -> u8;
@@ -87,4 +95,3 @@ impl std::fmt::Display for InstructionError {
 }
 
 impl Error for InstructionError {}
-
