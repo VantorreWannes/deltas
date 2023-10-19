@@ -15,7 +15,7 @@ const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 const ADD_INSTRUCTION_SIGN: u8 = b'+';
 const COPY_INSTRUCTION_SIGN: u8 = b'|';
 
-const NON_ZERO_MAX_COUNT_PERCENT: InstructionLength = 50;
+const NON_ZERO_MAX_COUNT_PERCENT: u8 = 50;
 
 use std::{iter::Peekable, slice::Iter};
 

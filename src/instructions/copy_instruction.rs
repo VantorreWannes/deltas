@@ -2,7 +2,7 @@ use std::{iter::Peekable, slice::Iter};
 
 use super::{
     InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionItem,
-    InstructionLength, Result, COPY_INSTRUCTION_SIGN,
+    InstructionLength, Result, COPY_INSTRUCTION_SIGN, NON_ZERO_MAX_COUNT_PERCENT,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -51,6 +51,31 @@ impl InstructionContent for CopyInstruction {
         }
         self.content.push(content);
         Ok(())
+    }
+
+    fn fill(
+        &mut self,
+        lcs: &mut super::InstructionItemIter,
+        source: &mut super::InstructionItemIter,
+        target: &mut super::InstructionItemIter,
+    ) {
+        let mut target_item = target.peek();
+        let mut lcs_item = lcs.peek();
+        let mut source_item = source.peek();
+        while lcs_item.is_some()
+            && target_item.is_some()
+            && source_item.is_some()
+            && !self.is_full()
+            && ((lcs_item == target_item && lcs_item == source_item)
+                || self.non_default_item_count().unwrap() <= self.treshold())
+        {
+            let item = target.next().unwrap().wrapping_sub(*source.next().unwrap());
+            self.push(item).unwrap();
+            lcs.next();
+            target_item = target.peek();
+            source_item = source.peek();
+            lcs_item = lcs.peek();
+        }
     }
 }
 
@@ -193,7 +218,7 @@ mod copy_instruction_tests {
     }
 
     #[test]
-    fn instruction_content() {
+    fn instruction_content_push() {
         let mut instruction =
             CopyInstruction::new(vec![
                 InstructionItem::default();
@@ -203,6 +228,28 @@ mod copy_instruction_tests {
         assert!(instruction
             .push(InstructionItem::default())
             .is_err_and(|err| err == InstructionError::ContentOverflow));
+    }
+
+    #[test]
+    fn instruction_content_fill() {
+        let lcs = vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
+        let source = vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
+        let mut target =
+            vec![InstructionItem::default(); (InstructionLength::MAX / 2).try_into().unwrap()];
+        target.append(&mut vec![
+            InstructionItem::default() + 1;
+            (InstructionLength::MAX / 2).try_into().unwrap()
+        ]);
+
+        let mut instruction = CopyInstruction::default();
+        instruction.fill(
+            &mut lcs.iter().peekable(),
+            &mut source.iter().peekable(),
+            &mut target.iter().peekable(),
+        );
+        dbg!(&instruction.content, instruction.non_default_item_count().unwrap(), instruction.treshold());
+        assert!(instruction.non_default_item_count().unwrap() <= instruction.treshold() + 1);
+        
     }
 
     #[test]
