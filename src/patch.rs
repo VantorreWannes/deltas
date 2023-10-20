@@ -7,6 +7,7 @@ use crate::{
     lcs::Lcs,
 };
 
+#[derive(Debug, Default, PartialEq, Clone)]
 pub struct Patch {
     instructions: Vec<DeltaInstruction>,
 }
@@ -33,11 +34,12 @@ impl Patch {
     ) -> Vec<DeltaInstruction> {
         let mut instructions: Vec<DeltaInstruction> = Vec::new();
         while lcs.peek().is_some() {
-            if lcs.peek() != source.peek() {
+            if lcs.len() > source.len() || lcs.len() > target.len() {}
+            if lcs.peek() != source.peek() && source.peek().is_some() {
                 let mut instruction: DeltaInstruction = RemoveInstruction::default().into();
                 instruction.fill(lcs, source, target);
                 instructions.push(instruction);
-            } else if lcs.peek() != target.peek() {
+            } else if lcs.peek() != target.peek() && target.peek().is_some() {
                 let mut instruction: DeltaInstruction = AddInstruction::default().into();
                 instruction.fill(lcs, source, target);
                 instructions.push(instruction);
@@ -58,5 +60,22 @@ impl Patch {
             instructions.push(instruction);
         }
         instructions
+    }
+}
+
+#[cfg(test)]
+mod remove_instruction_tests {
+    use super::*;
+
+    #[test]
+    fn new() {
+        //SPECIAL BUG: dbg!(Patch::new(b"ABCCCC", b"AC"));
+        assert_eq!(
+            Patch::new(b"BBAAA", b"AAABBBAA").instructions,
+            vec![
+                AddInstruction::new(vec![65, 65, 65]).into(),
+                CopyInstruction::new(vec![0, 0, 1, 0, 0,]).into(),
+            ],
+        );
     }
 }

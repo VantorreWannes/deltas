@@ -34,11 +34,11 @@ impl InstructionInfo for CopyInstruction {
         self.len() == InstructionLength::MAX
     }
 
-    fn default_item_count(&self) -> Option<InstructionLength> {
+    fn non_default_item_count(&self) -> Option<InstructionLength> {
         Some(
             self.content
                 .iter()
-                .filter(|item| **item == InstructionItem::default())
+                .filter(|item| **item != InstructionItem::default())
                 .count() as InstructionLength,
         )
     }
@@ -59,17 +59,17 @@ impl InstructionContent for CopyInstruction {
         source: &mut super::InstructionItemIter,
         target: &mut super::InstructionItemIter,
     ) {
-        while ((self.default_item_count().unwrap() > self.threshold())
-            || (lcs.peek().is_some()
-                && (source.peek() == lcs.peek() && lcs.peek() == target.peek())))
+        let mut allow_exception = self.non_default_item_count().unwrap() <= self.threshold();
+        let mut all_are_equal = source.peek() == lcs.peek() && lcs.peek() == target.peek();
+        while ((lcs.peek().is_some() && all_are_equal) || allow_exception)
             && !self.is_full()
             && (source.peek().is_some() && target.peek().is_some())
         {
             self.push(target.next().unwrap().wrapping_sub(*source.next().unwrap()))
                 .unwrap();
-            if !(self.default_item_count().unwrap() > self.threshold()) {
-                lcs.next();
-            }
+            lcs.next();
+            allow_exception = self.non_default_item_count().unwrap() <= self.threshold();
+            all_are_equal = source.peek() == lcs.peek() && lcs.peek() == target.peek();
         }
     }
 }
@@ -217,16 +217,13 @@ mod copy_instruction_tests {
     #[test]
     fn non_default_item_count() {
         let mut instruction = CopyInstruction::default();
-        for i in 0..(InstructionLength::MAX / 2) {
-            instruction.push(InstructionItem::default()).unwrap();
-            assert_eq!(instruction.default_item_count().unwrap(), i + 1);
-        }
         for _ in 0..(InstructionLength::MAX / 2) {
+            instruction.push(InstructionItem::default()).unwrap();
+            assert_eq!(instruction.non_default_item_count().unwrap(), 0);
+        }
+        for i in 0..(InstructionLength::MAX / 2) {
             instruction.push(InstructionItem::default() + 1).unwrap();
-            assert_eq!(
-                instruction.default_item_count().unwrap(),
-                InstructionLength::MAX / 2
-            );
+            assert_eq!(instruction.non_default_item_count().unwrap(), i + 1);
         }
     }
 
