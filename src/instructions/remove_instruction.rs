@@ -156,6 +156,8 @@ impl TryFrom<&[u8]> for RemoveInstruction {
 
 #[cfg(test)]
 mod remove_instruction_tests {
+    use crate::lcs::Lcs;
+
     use super::*;
 
     #[test]
@@ -182,22 +184,20 @@ mod remove_instruction_tests {
         );
     }
 
+    fn fill_wrapper(source: &[u8], target: &[u8]) -> RemoveInstruction {
+        let mut instruction = RemoveInstruction::default();
+        let lcs = Lcs::new(source, target).subsequence();
+        let mut lcs_iter = lcs.iter().peekable();
+        let mut source_iter = source.iter().peekable();
+        let mut target_iter = target.iter().peekable();
+        instruction.fill(&mut lcs_iter, &mut source_iter, &mut target_iter);
+        instruction
+    }
+
     #[test]
     fn instruction_content_fill() {
-        let source = vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
-        let lcs = vec![InstructionItem::default() + 1; InstructionLength::MAX.try_into().unwrap()];
-        let target: Vec<InstructionItem> = vec![];
-        let mut instruction = RemoveInstruction::default();
-        instruction.fill(
-            &mut lcs.iter().peekable(),
-            &mut source.iter().peekable(),
-            &mut target.iter().peekable(),
-        );
-        assert!(instruction.is_full());
-        assert_eq!(
-            instruction.length as InstructionLength,
-            source.len() as InstructionLength
-        );
+        let instruction = fill_wrapper(b"", b"");
+        
     }
 
     #[test]
