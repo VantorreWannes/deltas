@@ -59,15 +59,8 @@ impl InstructionContent for AddInstruction {
         _: &mut super::InstructionItemIter,
         target: &mut super::InstructionItemIter,
     ) {
-        let mut target_item = target.peek();
-        let lcs_item = lcs.peek();
-        while lcs_item.is_some()
-            && target_item.is_some()
-            && lcs_item != target_item
-            && !self.is_full()
-        {
+        while target.peek().is_some() && lcs.peek() != target.peek() && !self.is_full() {
             self.push(*target.next().unwrap()).unwrap();
-            target_item = target.peek();
         }
     }
 }
@@ -189,6 +182,8 @@ impl TryFrom<&[u8]> for AddInstruction {
 
 #[cfg(test)]
 mod add_instruction_tests {
+    use crate::lcs::Lcs;
+
     use super::*;
 
     #[test]
@@ -238,19 +233,24 @@ mod add_instruction_tests {
             .is_err_and(|err| err == InstructionError::ContentOverflow));
     }
 
+    fn fill_wrapper(source: &[u8], target: &[u8]) -> AddInstruction {
+        let mut instruction = AddInstruction::default();
+        let lcs = Lcs::new(source, target).subsequence();
+        let mut lcs_iter = lcs.iter().peekable();
+        let mut source_iter = source.iter().peekable();
+        let mut target_iter = target.iter().peekable();
+        instruction.fill(&mut lcs_iter, &mut source_iter, &mut target_iter);
+        instruction
+    }
+
     #[test]
     fn instruction_content_fill() {
-        let target = vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
-        let lcs = vec![InstructionItem::default() + 1; InstructionLength::MAX.try_into().unwrap()];
-        let source: Vec<InstructionItem> = vec![];
-        let mut instruction = AddInstruction::default();
-        instruction.fill(
-            &mut lcs.iter().peekable(),
-            &mut source.iter().peekable(),
-            &mut target.iter().peekable(),
-        );
-        assert!(instruction.is_full());
-        assert_eq!(instruction.content, target);
+        let instruction = fill_wrapper(b"", b"AAA");
+        assert_eq!(instruction.len(), 3);
+        let instruction = fill_wrapper(b"B", b"AAA");
+        assert_eq!(instruction.len(), 3);
+        let instruction = fill_wrapper(b"BBA", b"AAA");
+        assert_eq!(instruction.len(), 0);
     }
 
     #[test]
