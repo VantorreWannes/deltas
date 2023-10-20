@@ -1,5 +1,9 @@
 use crate::{
-    instructions::{delta_instruction::DeltaInstruction, InstructionItemIter},
+    instructions::{
+        add_instruction::AddInstruction, copy_instruction::CopyInstruction,
+        delta_instruction::DeltaInstruction, remove_instruction::RemoveInstruction,
+        InstructionContent, InstructionItemIter,
+    },
     lcs::Lcs,
 };
 
@@ -27,6 +31,32 @@ impl Patch {
         source: &mut InstructionItemIter,
         target: &mut InstructionItemIter,
     ) -> Vec<DeltaInstruction> {
-        todo!();
+        let mut instructions: Vec<DeltaInstruction> = Vec::new();
+        while lcs.peek().is_some() {
+            if lcs.peek() != source.peek() {
+                let mut instruction: DeltaInstruction = RemoveInstruction::default().into();
+                instruction.fill(lcs, source, target);
+                instructions.push(instruction);
+            } else if lcs.peek() != target.peek() {
+                let mut instruction: DeltaInstruction = AddInstruction::default().into();
+                instruction.fill(lcs, source, target);
+                instructions.push(instruction);
+            } else {
+                let mut instruction: DeltaInstruction = CopyInstruction::default().into();
+                instruction.fill(lcs, source, target);
+                instructions.push(instruction);
+            }
+        }
+        while lcs.peek() != source.peek() {
+            let mut instruction: DeltaInstruction = RemoveInstruction::default().into();
+            instruction.fill(lcs, source, target);
+            instructions.push(instruction);
+        }
+        while lcs.peek() != target.peek() {
+            let mut instruction: DeltaInstruction = AddInstruction::default().into();
+            instruction.fill(lcs, source, target);
+            instructions.push(instruction);
+        }
+        instructions
     }
 }

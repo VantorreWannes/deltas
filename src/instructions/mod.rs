@@ -1,9 +1,9 @@
 use std::error::Error;
 
-mod add_instruction;
-mod copy_instruction;
+pub mod add_instruction;
+pub mod copy_instruction;
 pub mod delta_instruction;
-mod remove_instruction;
+pub mod remove_instruction;
 
 type InstructionItem = u8;
 type InstructionLength = u8;
