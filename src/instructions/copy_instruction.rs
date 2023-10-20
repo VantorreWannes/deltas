@@ -34,7 +34,7 @@ impl InstructionInfo for CopyInstruction {
         self.len() == InstructionLength::MAX
     }
 
-    fn non_default_item_count(&self) -> Option<InstructionLength> {
+    fn default_item_count(&self) -> Option<InstructionLength> {
         Some(
             self.content
                 .iter()
@@ -67,7 +67,7 @@ impl InstructionContent for CopyInstruction {
             && source_item.is_some()
             && !self.is_full()
             && ((lcs_item == target_item && lcs_item == source_item)
-                || self.non_default_item_count().unwrap() <= self.threshold())
+                || self.default_item_count().unwrap() <= self.threshold())
         {
             let item = target.next().unwrap().wrapping_sub(*source.next().unwrap());
             self.push(item).unwrap();
@@ -249,10 +249,10 @@ mod copy_instruction_tests {
         );
         dbg!(
             &instruction.content,
-            instruction.non_default_item_count().unwrap(),
+            instruction.default_item_count().unwrap(),
             instruction.threshold()
         );
-        assert!(instruction.non_default_item_count().unwrap() <= instruction.threshold() + 1);
+        assert!(instruction.default_item_count().unwrap() <= instruction.threshold() + 1);
     }
 
     #[test]

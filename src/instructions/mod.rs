@@ -30,7 +30,7 @@ pub trait InstructionInfo {
         ((self.len() as u32 * NON_ZERO_MAX_COUNT_PERCENT as u32) / 100u32) as InstructionLength
     }
 
-    fn non_default_item_count(&self) -> Option<InstructionLength>;
+    fn default_item_count(&self) -> Option<InstructionLength>;
 }
 
 pub trait InstructionContent {
@@ -115,6 +115,6 @@ mod instruction_mod_tests {
         for len in 0..=InstructionLength::MAX {
             assert_eq!(threshold(len, NON_ZERO_MAX_COUNT_PERCENT), len / 2);
         }
-        //dbg!(threshold(10, 10));
+        //dbg!(threshold(1000, 10));
     }
 }

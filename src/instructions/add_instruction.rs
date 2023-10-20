@@ -34,11 +34,11 @@ impl InstructionInfo for AddInstruction {
         self.len() == InstructionLength::MAX
     }
 
-    fn non_default_item_count(&self) -> Option<InstructionLength> {
+    fn default_item_count(&self) -> Option<InstructionLength> {
         Some(
             self.content
                 .iter()
-                .filter(|item| **item != InstructionItem::default())
+                .filter(|item| **item == InstructionItem::default())
                 .count() as InstructionLength,
         )
     }
@@ -210,6 +210,19 @@ mod add_instruction_tests {
         instruction = AddInstruction::default();
         assert_eq!(instruction.len(), InstructionLength::MIN);
         assert!(instruction.is_empty());
+    }
+
+    #[test]
+    fn non_default_item_count() {
+        let mut instruction = AddInstruction::default();
+        for i in 0..(InstructionLength::MAX/2) {
+            instruction.push(InstructionItem::default()).unwrap();
+            assert_eq!(instruction.default_item_count().unwrap(), i+1);
+        }
+        for _ in 0..(InstructionLength::MAX/2) {
+            instruction.push(InstructionItem::default()+1).unwrap();
+            assert_eq!(instruction.default_item_count().unwrap(), InstructionLength::MAX/2);
+        }
     }
 
     #[test]
