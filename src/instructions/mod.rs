@@ -8,8 +8,8 @@ mod remove_instruction;
 type InstructionItem = u8;
 type InstructionLength = u8;
 
-type Result<T> = std::result::Result<T, InstructionError>;
-type InstructionItemIter<'a> = Peekable<Iter<'a, InstructionItem>>;
+pub type Result<T> = std::result::Result<T, InstructionError>;
+pub type InstructionItemIter<'a> = Peekable<Iter<'a, InstructionItem>>;
 
 const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 const ADD_INSTRUCTION_SIGN: u8 = b'+';
