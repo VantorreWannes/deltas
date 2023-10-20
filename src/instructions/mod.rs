@@ -30,7 +30,7 @@ pub trait InstructionInfo {
         ((self.len() as u32 * NON_ZERO_MAX_COUNT_PERCENT as u32) / 100u32) as InstructionLength
     }
 
-    fn default_item_count(&self) -> Option<InstructionLength>;
+    fn non_default_item_count(&self) -> Option<InstructionLength>;
 }
 
 pub trait InstructionContent {
