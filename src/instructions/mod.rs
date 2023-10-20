@@ -1,15 +1,15 @@
 use std::error::Error;
 
-mod add_instruction;
-mod copy_instruction;
+pub mod add_instruction;
+pub mod copy_instruction;
 pub mod delta_instruction;
-mod remove_instruction;
+pub mod remove_instruction;
 
 type InstructionItem = u8;
 type InstructionLength = u8;
 
-type Result<T> = std::result::Result<T, InstructionError>;
-type InstructionItemIter<'a> = Peekable<Iter<'a, InstructionItem>>;
+pub type Result<T> = std::result::Result<T, InstructionError>;
+pub type InstructionItemIter<'a> = Peekable<Iter<'a, InstructionItem>>;
 
 const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 const ADD_INSTRUCTION_SIGN: u8 = b'+';
@@ -30,7 +30,7 @@ pub trait InstructionInfo {
         ((self.len() as u32 * NON_ZERO_MAX_COUNT_PERCENT as u32) / 100u32) as InstructionLength
     }
 
-    fn default_item_count(&self) -> Option<InstructionLength>;
+    fn non_default_item_count(&self) -> Option<InstructionLength>;
 }
 
 pub trait InstructionContent {

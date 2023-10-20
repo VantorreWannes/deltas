@@ -38,11 +38,11 @@ impl InstructionInfo for DeltaInstruction {
         }
     }
 
-    fn default_item_count(&self) -> Option<super::InstructionLength> {
+    fn non_default_item_count(&self) -> Option<super::InstructionLength> {
         match self {
-            DeltaInstruction::Remove(instruction) => instruction.default_item_count(),
-            DeltaInstruction::Add(instruction) => instruction.default_item_count(),
-            DeltaInstruction::Copy(instruction) => instruction.default_item_count(),
+            DeltaInstruction::Remove(instruction) => instruction.non_default_item_count(),
+            DeltaInstruction::Add(instruction) => instruction.non_default_item_count(),
+            DeltaInstruction::Copy(instruction) => instruction.non_default_item_count(),
         }
     }
 }
@@ -221,16 +221,16 @@ mod delta_instruction_tests {
         );
 
         assert_eq!(
-            wrapped_remove_instruction.default_item_count(),
-            remove_instruction.default_item_count()
+            wrapped_remove_instruction.non_default_item_count(),
+            remove_instruction.non_default_item_count()
         );
         assert_eq!(
-            wrapped_add_instruction.default_item_count(),
-            add_instruction.default_item_count()
+            wrapped_add_instruction.non_default_item_count(),
+            add_instruction.non_default_item_count()
         );
         assert_eq!(
-            wrapped_copy_instruction.default_item_count(),
-            copy_instruction.default_item_count()
+            wrapped_copy_instruction.non_default_item_count(),
+            copy_instruction.non_default_item_count()
         );
     }
 
