@@ -34,11 +34,11 @@ impl InstructionInfo for CopyInstruction {
         self.len() == InstructionLength::MAX
     }
 
-    fn non_default_item_count(&self) -> Option<InstructionLength> {
+    fn default_item_count(&self) -> Option<InstructionLength> {
         Some(
             self.content
                 .iter()
-                .filter(|item| **item != InstructionItem::default())
+                .filter(|item| **item == InstructionItem::default())
                 .count() as InstructionLength,
         )
     }
@@ -59,22 +59,17 @@ impl InstructionContent for CopyInstruction {
         source: &mut super::InstructionItemIter,
         target: &mut super::InstructionItemIter,
     ) {
-        let mut target_item = target.peek();
-        let mut lcs_item = lcs.peek();
-        let mut source_item = source.peek();
-        while lcs_item.is_some()
-            && target_item.is_some()
-            && source_item.is_some()
+        while ((self.default_item_count().unwrap() > self.threshold())
+            || (lcs.peek().is_some()
+                && (source.peek() == lcs.peek() && lcs.peek() == target.peek())))
             && !self.is_full()
-            && ((lcs_item == target_item && lcs_item == source_item)
-                || self.non_default_item_count().unwrap() <= self.treshold())
+            && (source.peek().is_some() && target.peek().is_some())
         {
-            let item = target.next().unwrap().wrapping_sub(*source.next().unwrap());
-            self.push(item).unwrap();
-            lcs.next();
-            target_item = target.peek();
-            source_item = source.peek();
-            lcs_item = lcs.peek();
+            self.push(target.next().unwrap().wrapping_sub(*source.next().unwrap()))
+                .unwrap();
+            if !(self.default_item_count().unwrap() > self.threshold()) {
+                lcs.next();
+            }
         }
     }
 }
@@ -195,6 +190,8 @@ impl TryFrom<&[u8]> for CopyInstruction {
 
 #[cfg(test)]
 mod copy_instruction_tests {
+    use crate::lcs::Lcs;
+
     use super::*;
 
     #[test]
@@ -218,6 +215,22 @@ mod copy_instruction_tests {
     }
 
     #[test]
+    fn non_default_item_count() {
+        let mut instruction = CopyInstruction::default();
+        for i in 0..(InstructionLength::MAX / 2) {
+            instruction.push(InstructionItem::default()).unwrap();
+            assert_eq!(instruction.default_item_count().unwrap(), i + 1);
+        }
+        for _ in 0..(InstructionLength::MAX / 2) {
+            instruction.push(InstructionItem::default() + 1).unwrap();
+            assert_eq!(
+                instruction.default_item_count().unwrap(),
+                InstructionLength::MAX / 2
+            );
+        }
+    }
+
+    #[test]
     fn instruction_content_push() {
         let mut instruction =
             CopyInstruction::new(vec![
@@ -230,29 +243,22 @@ mod copy_instruction_tests {
             .is_err_and(|err| err == InstructionError::ContentOverflow));
     }
 
+    fn fill_wrapper(source: &[u8], target: &[u8]) -> CopyInstruction {
+        let mut instruction = CopyInstruction::default();
+        let lcs = Lcs::new(source, target).subsequence();
+        let mut lcs_iter = lcs.iter().peekable();
+        let mut source_iter = source.iter().peekable();
+        let mut target_iter = target.iter().peekable();
+        instruction.fill(&mut lcs_iter, &mut source_iter, &mut target_iter);
+        instruction
+    }
+
     #[test]
     fn instruction_content_fill() {
-        let lcs = vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
-        let source = vec![InstructionItem::default(); InstructionLength::MAX.try_into().unwrap()];
-        let mut target =
-            vec![InstructionItem::default(); (InstructionLength::MAX / 2).try_into().unwrap()];
-        target.append(&mut vec![
-            InstructionItem::default() + 1;
-            (InstructionLength::MAX / 2).try_into().unwrap()
-        ]);
-
-        let mut instruction = CopyInstruction::default();
-        instruction.fill(
-            &mut lcs.iter().peekable(),
-            &mut source.iter().peekable(),
-            &mut target.iter().peekable(),
-        );
-        dbg!(
-            &instruction.content,
-            instruction.non_default_item_count().unwrap(),
-            instruction.treshold()
-        );
-        assert!(instruction.non_default_item_count().unwrap() <= instruction.treshold() + 1);
+        assert_eq!(fill_wrapper(b"ABC", b"AYZ").len(), 2);
+        assert_eq!(fill_wrapper(b"", b"AYZ").len(), 0);
+        assert_eq!(fill_wrapper(b"ABC", b"").len(), 0);
+        assert_eq!(fill_wrapper(b"AABB", b"AACC").len(), 4);
     }
 
     #[test]
