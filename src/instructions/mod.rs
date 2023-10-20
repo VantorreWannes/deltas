@@ -26,7 +26,7 @@ pub trait InstructionInfo {
 
     fn is_full(&self) -> bool;
 
-    fn treshold(&self) -> InstructionLength {
+    fn threshold(&self) -> InstructionLength {
         ((self.len() as u32 * NON_ZERO_MAX_COUNT_PERCENT as u32) / 100u32) as InstructionLength
     }
 
@@ -101,3 +101,20 @@ impl std::fmt::Display for InstructionError {
 }
 
 impl Error for InstructionError {}
+
+#[cfg(test)]
+mod instruction_mod_tests {
+    use super::*;
+
+    fn threshold(len: InstructionLength, non_zero_max_count_percent: InstructionLength) -> InstructionLength {
+        ((len as f32 * non_zero_max_count_percent as f32) / 100f32) as InstructionLength
+    }
+
+    #[test]
+    fn instruction_info() {
+        for len in 0..=InstructionLength::MAX {
+            assert_eq!(threshold(len, NON_ZERO_MAX_COUNT_PERCENT), len / 2);
+        }
+        //dbg!(threshold(10, 10));
+    }
+}

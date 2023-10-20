@@ -67,7 +67,7 @@ impl InstructionContent for CopyInstruction {
             && source_item.is_some()
             && !self.is_full()
             && ((lcs_item == target_item && lcs_item == source_item)
-                || self.non_default_item_count().unwrap() <= self.treshold())
+                || self.non_default_item_count().unwrap() <= self.threshold())
         {
             let item = target.next().unwrap().wrapping_sub(*source.next().unwrap());
             self.push(item).unwrap();
@@ -250,9 +250,9 @@ mod copy_instruction_tests {
         dbg!(
             &instruction.content,
             instruction.non_default_item_count().unwrap(),
-            instruction.treshold()
+            instruction.threshold()
         );
-        assert!(instruction.non_default_item_count().unwrap() <= instruction.treshold() + 1);
+        assert!(instruction.non_default_item_count().unwrap() <= instruction.threshold() + 1);
     }
 
     #[test]
