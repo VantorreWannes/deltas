@@ -2,7 +2,7 @@ use crate::{
     instructions::{
         add_instruction::AddInstruction, copy_instruction::CopyInstruction,
         delta_instruction::DeltaInstruction, remove_instruction::RemoveInstruction,
-        InstructionContent, InstructionItemIter,
+        InstructionBytes, InstructionContent, InstructionItemIter,
     },
     lcs::Lcs,
 };
@@ -60,6 +60,21 @@ impl Patch {
             instructions.push(instruction);
         }
         instructions
+    }
+
+    fn byte_length(&self) -> usize {
+        self.instructions
+            .iter()
+            .map(|instruction| instruction.byte_length())
+            .sum::<usize>()
+    }
+
+    pub fn to_bytes(&self) ->  Vec<u8> {
+        let mut bytes: Vec<u8> = Vec::with_capacity(self.byte_length());
+        for instruction in self.instructions.iter() {
+            bytes.extend(instruction.to_bytes());
+        }
+        bytes
     }
 }
 

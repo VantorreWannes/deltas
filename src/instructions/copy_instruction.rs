@@ -59,17 +59,15 @@ impl InstructionContent for CopyInstruction {
         source: &mut super::InstructionItemIter,
         target: &mut super::InstructionItemIter,
     ) {
-        let mut allow_exception = self.non_default_item_count().unwrap() <= self.threshold();
-        let mut all_are_equal = source.peek() == lcs.peek() && lcs.peek() == target.peek();
-        while ((lcs.peek().is_some() && all_are_equal) || allow_exception)
+        while ((lcs.peek().is_some()
+            && (source.peek() == lcs.peek() && lcs.peek() == target.peek()))
+            || (self.non_default_item_count().unwrap() <= self.threshold()))
             && !self.is_full()
             && (source.peek().is_some() && target.peek().is_some())
         {
             self.push(target.next().unwrap().wrapping_sub(*source.next().unwrap()))
                 .unwrap();
             lcs.next();
-            allow_exception = self.non_default_item_count().unwrap() <= self.threshold();
-            all_are_equal = source.peek() == lcs.peek() && lcs.peek() == target.peek();
         }
     }
 }
