@@ -49,12 +49,12 @@ impl Patch {
                 instructions.push(instruction);
             }
         }
-        while lcs.peek() != source.peek() {
+        while source.peek().is_some() {
             let mut instruction: DeltaInstruction = RemoveInstruction::default().into();
             instruction.fill(lcs, source, target);
             instructions.push(instruction);
         }
-        while lcs.peek() != target.peek() {
+        while target.peek().is_some() {
             let mut instruction: DeltaInstruction = AddInstruction::default().into();
             instruction.fill(lcs, source, target);
             instructions.push(instruction);
