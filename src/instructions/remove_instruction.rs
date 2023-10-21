@@ -53,6 +53,10 @@ impl InstructionContent for RemoveInstruction {
             self.push(*source.next().unwrap()).unwrap();
         }
     }
+
+    fn apply(&self, source: &mut Iter<'_, u8>, target: &mut Vec<u8>) {
+        let _ = source.take(self.len() as usize);
+    }
 }
 
 impl InstructionBytes for RemoveInstruction {

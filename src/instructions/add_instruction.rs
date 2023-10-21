@@ -63,6 +63,10 @@ impl InstructionContent for AddInstruction {
             self.push(*target.next().unwrap()).unwrap();
         }
     }
+
+    fn apply(&self, _: &mut Iter<'_, u8>, target: &mut Vec<u8>) {
+        target.extend(self.content.iter());
+    }
 }
 
 impl InstructionBytes for AddInstruction {
@@ -216,10 +220,7 @@ mod add_instruction_tests {
         }
         for i in 0..(InstructionLength::MAX / 2) {
             instruction.push(InstructionItem::default() + 1).unwrap();
-            assert_eq!(
-                instruction.non_default_item_count().unwrap(),
-                i+1
-            );
+            assert_eq!(instruction.non_default_item_count().unwrap(), i + 1);
         }
     }
 
