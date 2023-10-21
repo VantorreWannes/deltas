@@ -63,6 +63,10 @@ impl InstructionContent for AddInstruction {
             self.push(*target.next().unwrap()).unwrap();
         }
     }
+
+    fn apply(_: &mut Peekable<Iter<'_, u8>>, target: &mut Vec<u8>) {
+        todo!();
+    }
 }
 
 impl InstructionBytes for AddInstruction {

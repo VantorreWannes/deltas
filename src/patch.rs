@@ -66,8 +66,12 @@ impl Patch {
         todo!();
     }
 
-    fn construct_target(&self, source: &[u8], target_length: usize) -> Vec<u8> {
-        todo!();
+    fn construct_target(&self, source: &[u8]) -> Vec<u8> {
+        let mut target: Vec<u8> = Vec::with_capacity(self.target_lenth());
+        for instruction in self.instructions.iter() {
+            todo!();
+        }
+        target
     }
 
     fn target_lenth(&self) -> usize {
