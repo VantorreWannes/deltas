@@ -64,7 +64,7 @@ impl InstructionContent for AddInstruction {
         }
     }
 
-    fn apply(&self, _: &mut Peekable<Iter<'_, u8>>, target: &mut Vec<u8>) {
+    fn apply(&self, _: &mut Iter<'_, u8>, target: &mut Vec<u8>) {
         target.extend(self.content.iter());
     }
 }

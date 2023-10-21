@@ -69,7 +69,7 @@ impl InstructionContent for DeltaInstruction {
         }
     }
 
-    fn apply(&self, source: &mut Peekable<Iter<'_, u8>>, target: &mut Vec<u8>) {
+    fn apply(&self, source: &mut Iter<'_, u8>, target: &mut Vec<u8>) {
         match self {
             DeltaInstruction::Remove(instruction) => instruction.apply(source, target),
             DeltaInstruction::Add(instruction) => instruction.apply(source, target),

@@ -2,7 +2,7 @@ use std::{iter::Peekable, slice::Iter};
 
 use super::{
     InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionItem,
-    InstructionLength, Result, COPY_INSTRUCTION_SIGN, NON_ZERO_MAX_COUNT_PERCENT,
+    InstructionLength, Result, COPY_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -71,7 +71,7 @@ impl InstructionContent for CopyInstruction {
         }
     }
 
-    fn apply(&self, source: &mut Peekable<Iter<'_, u8>>, target: &mut Vec<u8>) {
+    fn apply(&self, source: &mut Iter<'_, u8>, target: &mut Vec<u8>) {
         for item in self.content.iter() {
             target.push(source.next().unwrap().wrapping_add(*item));
         } 

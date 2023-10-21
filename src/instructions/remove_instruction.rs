@@ -54,8 +54,8 @@ impl InstructionContent for RemoveInstruction {
         }
     }
 
-    fn apply(&self, source: &mut Peekable<Iter<'_, u8>>, target: &mut Vec<u8>) {
-        source.take(self.len() as usize);
+    fn apply(&self, source: &mut Iter<'_, u8>, target: &mut Vec<u8>) {
+        let _ = source.take(self.len() as usize);
     }
 }
 
