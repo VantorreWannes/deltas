@@ -83,7 +83,22 @@ impl Patch {
                     }
                 };
                 acc
-            }) as usize
+            })
+    }
+
+    fn source_lenth(&self) -> usize {
+        self.instructions
+            .iter()
+            .fold(0usize, |mut acc, instruction| {
+                match instruction {
+                    DeltaInstruction::Remove(_) => acc += instruction.len() as usize,
+                    DeltaInstruction::Add(_) => (),
+                    DeltaInstruction::Copy(_) => {
+                        acc += instruction.len() as usize
+                    }
+                };
+                acc
+            })
     }
 
     fn byte_length(&self) -> usize {
@@ -127,5 +142,14 @@ mod remove_instruction_tests {
         );
         assert_eq!(Patch::new(b"AAAAAAAA", b"").target_lenth(), 0);
         assert_eq!(Patch::new(b"", b"AAA").target_lenth(), 3);
+    }
+
+
+    #[test]
+    fn source_length() {
+        assert_eq!(Patch::new(b"AAA", b"AAA").source_lenth(), 3);
+        assert_eq!(Patch::new(b"", b"AAA").source_lenth(), 0);
+        assert_eq!(Patch::new(b"AAA", b"").source_lenth(), 3);
+        assert_eq!(Patch::new(b"AAA", b"BAABBCCCAAA").source_lenth(), 3);
     }
 }
