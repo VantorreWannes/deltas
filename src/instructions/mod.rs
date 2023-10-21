@@ -106,7 +106,10 @@ impl Error for InstructionError {}
 mod instruction_mod_tests {
     use super::*;
 
-    fn threshold(len: InstructionLength, non_zero_max_count_percent: InstructionLength) -> InstructionLength {
+    fn threshold(
+        len: InstructionLength,
+        non_zero_max_count_percent: InstructionLength,
+    ) -> InstructionLength {
         ((len as f32 * non_zero_max_count_percent as f32) / 100f32) as InstructionLength
     }
 

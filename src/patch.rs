@@ -2,7 +2,7 @@ use crate::{
     instructions::{
         add_instruction::AddInstruction, copy_instruction::CopyInstruction,
         delta_instruction::DeltaInstruction, remove_instruction::RemoveInstruction,
-        InstructionBytes, InstructionContent, InstructionItemIter,
+        InstructionBytes, InstructionContent, InstructionInfo, InstructionItemIter,
     },
     lcs::Lcs,
 };
@@ -62,6 +62,30 @@ impl Patch {
         instructions
     }
 
+    pub fn apply(&self, source: &[u8]) -> Vec<u8> {
+        todo!();
+    }
+
+    fn construct_target(&self, source: &[u8], target_length: usize) -> Vec<u8> {
+        todo!();
+    }
+
+    fn target_lenth(&self) -> usize {
+        self.instructions
+            .iter()
+            .fold(0usize, |mut acc, instruction| {
+                match instruction {
+                    DeltaInstruction::Remove(_) => (),
+                    DeltaInstruction::Add(_) => acc += instruction.len() as usize,
+                    DeltaInstruction::Copy(_) => {
+                        acc += instruction.len() as usize
+                            - instruction.non_default_item_count().unwrap() as usize
+                    }
+                };
+                acc
+            }) as usize
+    }
+
     fn byte_length(&self) -> usize {
         self.instructions
             .iter()
@@ -69,7 +93,7 @@ impl Patch {
             .sum::<usize>()
     }
 
-    pub fn to_bytes(&self) ->  Vec<u8> {
+    pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes: Vec<u8> = Vec::with_capacity(self.byte_length());
         for instruction in self.instructions.iter() {
             bytes.extend(instruction.to_bytes());
@@ -92,5 +116,16 @@ mod remove_instruction_tests {
                 CopyInstruction::new(vec![0, 0, 1, 0, 0,]).into(),
             ],
         );
+    }
+
+    #[test]
+    fn target_length() {
+        assert_eq!(Patch::new(b"AAAAAAAA", b"AAA").target_lenth(), 3);
+        assert_eq!(
+            Patch::new(b"AAAAAAAABBBCCC", b"BBBCCCAAA").target_lenth(),
+            9
+        );
+        assert_eq!(Patch::new(b"AAAAAAAA", b"").target_lenth(), 0);
+        assert_eq!(Patch::new(b"", b"AAA").target_lenth(), 3);
     }
 }
