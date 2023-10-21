@@ -174,6 +174,9 @@ mod remove_instruction_tests {
         Towering trees stretched their long, gnarled branches across the narrow trail, shrouding it in an enigmatic darkness.
         The distant melodies of birds echoed through the air, which carried the unmistakable aroma of the forest floor.
         With each step deeper into the wilderness, the excitement of the potential discoveries ahead intensified.";
-        assert_eq!(Patch::new(source, target).apply(source), Some(target.to_vec()));
+        assert_eq!(
+            Patch::new(source, target).apply(source),
+            Some(target.to_vec())
+        );
     }
 }

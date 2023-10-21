@@ -74,7 +74,7 @@ impl InstructionContent for CopyInstruction {
     fn apply(&self, source: &mut Iter<'_, u8>, target: &mut Vec<u8>) {
         for item in self.content.iter() {
             target.push(source.next().unwrap().wrapping_add(*item));
-        } 
+        }
     }
 }
 

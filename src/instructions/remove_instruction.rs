@@ -54,7 +54,7 @@ impl InstructionContent for RemoveInstruction {
         }
     }
 
-    fn apply(&self, source: &mut Iter<'_, u8>, target: &mut Vec<u8>) {
+    fn apply(&self, source: &mut Iter<'_, u8>, _: &mut Vec<u8>) {
         let _ = source.take(self.len() as usize);
     }
 }
