@@ -43,7 +43,7 @@ pub trait InstructionContent {
         target: &mut InstructionItemIter,
     );
 
-    fn apply(source: &mut Peekable<Iter<'_, u8>>, target: &mut Vec<u8>);
+    fn apply(&self, source: &mut Peekable<Iter<'_, u8>>, target: &mut Vec<u8>);
 }
 pub trait InstructionBytes {
     fn byte_sign(&self) -> u8;
