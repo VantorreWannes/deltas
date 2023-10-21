@@ -68,6 +68,14 @@ impl InstructionContent for DeltaInstruction {
             DeltaInstruction::Copy(instruction) => instruction.fill(lcs, source, target),
         }
     }
+
+    fn apply(&self, source: &mut Peekable<Iter<'_, u8>>, target: &mut Vec<u8>) {
+        match self {
+            DeltaInstruction::Remove(instruction) => instruction.apply(source, target),
+            DeltaInstruction::Add(instruction) => instruction.apply(source, target),
+            DeltaInstruction::Copy(instruction) => instruction.apply(source, target),
+        }
+    }
 }
 
 impl InstructionBytes for DeltaInstruction {

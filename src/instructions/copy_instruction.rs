@@ -70,6 +70,12 @@ impl InstructionContent for CopyInstruction {
             lcs.next();
         }
     }
+
+    fn apply(&self, source: &mut Peekable<Iter<'_, u8>>, target: &mut Vec<u8>) {
+        for item in self.content.iter() {
+            target.push(source.next().unwrap().wrapping_add(*item));
+        } 
+    }
 }
 
 impl InstructionBytes for CopyInstruction {
