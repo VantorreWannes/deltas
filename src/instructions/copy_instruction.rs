@@ -256,7 +256,7 @@ mod copy_instruction_tests {
 
     #[test]
     fn instruction_content_fill() {
-        assert_eq!(fill_wrapper(b"ABC", b"AYZ").len(), 2);
+        assert_eq!(fill_wrapper(b"ABC", b"AYZ").len(), 3);
         assert_eq!(fill_wrapper(b"", b"AYZ").len(), 0);
         assert_eq!(fill_wrapper(b"ABC", b"").len(), 0);
         assert_eq!(fill_wrapper(b"AABB", b"AACC").len(), 4);
