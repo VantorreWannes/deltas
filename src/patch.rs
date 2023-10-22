@@ -4,7 +4,7 @@ use crate::{
     instructions::{
         add_instruction::AddInstruction, copy_instruction::CopyInstruction,
         delta_instruction::DeltaInstruction, remove_instruction::RemoveInstruction,
-        InstructionBytes, InstructionContent, InstructionInfo, InstructionItemIter,
+        InstructionBytes, InstructionContent, InstructionInfo, InstructionItemIter, Result,
     },
     lcs::Lcs,
 };
@@ -122,6 +122,15 @@ impl Patch {
             bytes.extend(instruction.to_bytes());
         }
         bytes
+    }
+
+    pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
+        let mut bytes_iter = bytes.iter().peekable();
+        let mut instructions: Vec<DeltaInstruction> = Vec::new();
+        while bytes_iter.peek().is_some() {
+            instructions.push(DeltaInstruction::try_from_bytes(&mut bytes_iter)?);
+        }
+        Ok(Self { instructions })
     }
 }
 
