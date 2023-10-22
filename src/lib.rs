@@ -9,6 +9,15 @@ mod tests {
     use crate::patch::Patch;
 
     #[test]
+    fn speed() {
+        let source = fs::read("files/source.txt").unwrap();
+        let target = fs::read("files/target.txt").unwrap();
+        let patch = Patch::new(&source, &target);
+        let patch_bytes = patch.to_bytes();
+        fs::write("files/raw_patch", patch_bytes).unwrap();
+    }
+
+    #[test]
     fn it_works() {
         let source = fs::read("files/source.txt").unwrap();
         let target = fs::read("files/target.txt").unwrap();
