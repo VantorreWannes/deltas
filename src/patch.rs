@@ -36,7 +36,7 @@ impl Patch {
     ) -> Vec<DeltaInstruction> {
         let mut instructions: Vec<DeltaInstruction> = Vec::new();
         while lcs.peek().is_some() {
-            if lcs.len() > source.len() || lcs.len() > target.len() {}
+            debug_assert!(lcs.len() <= source.len() && lcs.len() <= target.len());
             if lcs.peek() != source.peek() && source.peek().is_some() {
                 let mut instruction: DeltaInstruction = RemoveInstruction::default().into();
                 instruction.fill(lcs, source, target);
@@ -73,14 +73,14 @@ impl Patch {
         if source.len() != self.source_lenth() {
             return None;
         }
-        let mut target: Vec<u8> = Vec::with_capacity(self.target_lenth());
+        let mut target: Vec<u8> = Vec::with_capacity(self.target_length());
         for instruction in self.instructions.iter() {
             instruction.apply(source, &mut target)
         }
         Some(target)
     }
 
-    fn target_lenth(&self) -> usize {
+    fn target_length(&self) -> usize {
         self.instructions
             .iter()
             .fold(0usize, |mut acc, instruction| {
@@ -143,13 +143,13 @@ mod remove_instruction_tests {
 
     #[test]
     fn target_length() {
-        assert_eq!(Patch::new(b"AAAAAAAA", b"AAA").target_lenth(), 3);
+        assert_eq!(Patch::new(b"AAAAAAAA", b"AAA").target_length(), 3);
         assert_eq!(
-            Patch::new(b"AAAAAAAABBBCCC", b"BBBCCCAAA").target_lenth(),
+            Patch::new(b"AAAAAAAABBBCCC", b"BBBCCCAAA").target_length(),
             9
         );
-        assert_eq!(Patch::new(b"AAAAAAAA", b"").target_lenth(), 0);
-        assert_eq!(Patch::new(b"", b"AAA").target_lenth(), 3);
+        assert_eq!(Patch::new(b"AAAAAAAA", b"").target_length(), 0);
+        assert_eq!(Patch::new(b"", b"AAA").target_length(), 3);
     }
 
     #[test]
@@ -164,19 +164,32 @@ mod remove_instruction_tests {
     fn apply() {
         assert_eq!(Patch::new(b"", b"AAA").apply(b""), Some(b"AAA".to_vec()));
         assert_eq!(Patch::new(b"AAA", b"").apply(b"AAA"), Some(b"".to_vec()));
-        let source = b"
-        The journey through the dense forest was challenging. 
-        The towering trees cast long shadows over the narrow path, making it feel like a mysterious labyrinth. 
-        Birds chirped in the distance, and the air was filled with the earthy scent of the woods. 
-        As the hikers ventured deeper, the anticipation of what they might discover grew stronger.";
-        let target = b"
-        The trek through the thick forest proved to be quite demanding.
-        Towering trees stretched their long, gnarled branches across the narrow trail, shrouding it in an enigmatic darkness.
-        The distant melodies of birds echoed through the air, which carried the unmistakable aroma of the forest floor.
-        With each step deeper into the wilderness, the excitement of the potential discoveries ahead intensified.";
-        assert_eq!(
-            Patch::new(source, target).apply(source),
-            Some(target.to_vec())
-        );
+        let source_phrases = vec![
+            b"The quick brown fox jumps over the lazy dog.".to_vec(),
+            b"Rust is a systems programming language.".to_vec(),
+            b"12345".to_vec(),
+            b"OpenAI's GPT-3 is a language model.".to_vec(),
+            b"Delta encoding is efficient for data compression.".to_vec(),
+            b"Unit testing is crucial for software development.".to_vec(),
+            b"Markdown is a lightweight markup language.".to_vec(),
+            b"C# is used for developing Windows applications.".to_vec(),
+            b"Python is known for its simplicity and readability.".to_vec(),
+            b"Binary files can be challenging to diff.".to_vec(),
+        ];
+        let target_phrases = vec![
+            b"A slow red cat leaps over a sleepy dog.".to_vec(),
+            b"C++ is a high-level programming language.".to_vec(),
+            b"67890".to_vec(),
+            b"OpenAI's GPT-4 is an AI language model.".to_vec(),
+            b"Run-length encoding is effective for data compression.".to_vec(),
+            b"Integration testing is vital for software development.".to_vec(),
+            b"HTML is a versatile markup language.".to_vec(),
+            b"Java is utilized for building Android applications.".to_vec(),
+            b"JavaScript is praised for its flexibility and ease of use.".to_vec(),
+            b"Text files are easy to compare, unlike binary files.".to_vec(),
+        ];
+        for (source, target) in source_phrases.iter().zip(target_phrases.iter()) {
+            assert_eq!(&Patch::new(&source, &target).apply(source).unwrap(), target);
+        }
     }
 }

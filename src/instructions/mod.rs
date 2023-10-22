@@ -118,7 +118,7 @@ mod instruction_mod_tests {
     #[test]
     fn instruction_info() {
         for len in 0..=InstructionLength::MAX {
-            assert_eq!(threshold(len, NON_ZERO_MAX_COUNT_PERCENT), len / 2);
+            assert_eq!(threshold(len, NON_ZERO_MAX_COUNT_PERCENT), len);
         }
         //dbg!(threshold(1000, 10));
     }

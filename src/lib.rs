@@ -1,5 +1,5 @@
-pub mod instructions;
-pub mod lcs;
+mod instructions;
+mod lcs;
 pub mod patch;
 
 pub fn add(left: usize, right: usize) -> usize {
@@ -8,11 +8,17 @@ pub fn add(left: usize, right: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+
+    use std::fs;
+
+    use crate::patch::Patch;
 
     #[test]
     fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+        let source = fs::read("files/source.txt").unwrap();
+        let target = fs::read("files/target.txt").unwrap();
+        let patch = Patch::new(&source, &target);
+        let result = patch.apply(&source).unwrap();
+        assert_eq!(result, target);
     }
 }
