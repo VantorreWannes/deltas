@@ -1,10 +1,11 @@
-use std::slice::Iter;
+use std::{iter::Peekable, slice::Iter};
 
 use crate::{
     instructions::{
         add_instruction::AddInstruction, copy_instruction::CopyInstruction,
         delta_instruction::DeltaInstruction, remove_instruction::RemoveInstruction,
-        InstructionBytes, InstructionContent, InstructionInfo, InstructionItemIter,
+        InstructionBytes, InstructionContent, InstructionError, InstructionInfo,
+        InstructionItemIter, Result,
     },
     lcs::Lcs,
 };
@@ -123,10 +124,49 @@ impl Patch {
         }
         bytes
     }
+
+    pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
+        let mut bytes_iter = bytes.iter().peekable();
+        let mut instructions: Vec<DeltaInstruction> = Vec::new();
+        while bytes_iter.peek().is_some() {
+            instructions.push(DeltaInstruction::try_from_bytes(&mut bytes_iter)?);
+        }
+        Ok(Self { instructions })
+    }
+}
+
+impl From<&Patch> for Vec<u8> {
+    fn from(patch: &Patch) -> Self {
+        patch.to_bytes()
+    }
+}
+
+impl From<Patch> for Vec<u8> {
+    fn from(patch: Patch) -> Self {
+        patch.to_bytes()
+    }
+}
+
+impl TryFrom<&[u8]> for Patch {
+    type Error = InstructionError;
+
+    fn try_from(value: &[u8]) -> std::result::Result<Self, Self::Error> {
+        Patch::try_from_bytes(value)
+    }
+}
+
+impl TryFrom<Vec<u8>> for Patch {
+    type Error = InstructionError;
+
+    fn try_from(value: Vec<u8>) -> std::result::Result<Self, Self::Error> {
+        Patch::try_from_bytes(&value)
+    }
 }
 
 #[cfg(test)]
 mod remove_instruction_tests {
+    use std::fs;
+
     use super::*;
 
     #[test]
@@ -191,5 +231,15 @@ mod remove_instruction_tests {
         for (source, target) in source_phrases.iter().zip(target_phrases.iter()) {
             assert_eq!(&Patch::new(&source, &target).apply(source).unwrap(), target);
         }
+    }
+
+    #[test]
+    fn try_from_bytes() {
+        let source = fs::read("files/source.txt").unwrap();
+        let target = fs::read("files/target.txt").unwrap();
+        let patch = Patch::new(&source, &target);
+        let patch_bytes = patch.to_bytes();
+        let constructed_patch = Patch::try_from_bytes(&patch_bytes).unwrap();
+        assert_eq!(patch, constructed_patch);
     }
 }
