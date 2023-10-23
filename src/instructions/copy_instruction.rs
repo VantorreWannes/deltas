@@ -112,21 +112,8 @@ impl InstructionBytes for CopyInstruction {
                 .map_err(|_| InstructionError::InvalidLength)?,
         );
 
-        let content_bytes: Vec<u8> = bytes.take(length.try_into().unwrap()).copied().collect();
-
-        let content: Result<Vec<u8>> = content_bytes
-            .chunks(std::mem::size_of::<u8>())
-            .map(|chunk: &[u8]| -> Result<u8> {
-                Ok(u8::from_be_bytes(
-                    chunk
-                        .try_into()
-                        .map_err(|_| InstructionError::InvalidContent)?,
-                ))
-            })
-            .collect();
-
-        let content = content?;
-
+        let content: Vec<u8> = bytes.take(length.try_into().unwrap()).copied().collect();
+        
         if content.len() < length as usize {
             return Err(InstructionError::MissingContent);
         }

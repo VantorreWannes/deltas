@@ -170,7 +170,6 @@ mod remove_instruction_tests {
 
     #[test]
     fn new() {
-        //SPECIAL BUG: dbg!(Patch::new(b"ABCCCC", b"AC"));
         assert_eq!(
             Patch::new(b"BBAAA", b"AAABBBAA").instructions,
             vec![
