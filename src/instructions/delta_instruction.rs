@@ -58,9 +58,9 @@ impl InstructionContent for DeltaInstruction {
 
     fn fill(
         &mut self,
-        lcs: &mut super::InstructionItemIter,
-        source: &mut super::InstructionItemIter,
-        target: &mut super::InstructionItemIter,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+        source: &mut Peekable<Iter<'_, u8>>,
+        target: &mut Peekable<Iter<'_, u8>>,
     ) {
         match self {
             DeltaInstruction::Remove(instruction) => instruction.fill(lcs, source, target),

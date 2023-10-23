@@ -45,9 +45,9 @@ impl InstructionContent for RemoveInstruction {
 
     fn fill(
         &mut self,
-        lcs: &mut super::InstructionItemIter,
-        source: &mut super::InstructionItemIter,
-        _: &mut super::InstructionItemIter,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+        source: &mut Peekable<Iter<'_, u8>>,
+        _: &mut Peekable<Iter<'_, u8>>,
     ) {
         while source.peek().is_some() && lcs.peek() != source.peek() && !self.is_full() {
             self.push(*source.next().unwrap()).unwrap();

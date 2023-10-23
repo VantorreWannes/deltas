@@ -1,8 +1,8 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    InstructionBytes, InstructionContent, InstructionError, InstructionInfo,
-    InstructionLength, Result, ADD_INSTRUCTION_SIGN,
+    InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionLength,
+    Result, ADD_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -35,12 +35,7 @@ impl InstructionInfo for AddInstruction {
     }
 
     fn non_default_item_count(&self) -> Option<InstructionLength> {
-        Some(
-            self.content
-                .iter()
-                .filter(|item| **item != 0)
-                .count() as InstructionLength,
-        )
+        Some(self.content.iter().filter(|item| **item != 0).count() as InstructionLength)
     }
 }
 
@@ -55,9 +50,9 @@ impl InstructionContent for AddInstruction {
 
     fn fill(
         &mut self,
-        lcs: &mut super::InstructionItemIter,
-        _: &mut super::InstructionItemIter,
-        target: &mut super::InstructionItemIter,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+        _: &mut Peekable<Iter<'_, u8>>,
+        target: &mut Peekable<Iter<'_, u8>>,
     ) {
         while target.peek().is_some() && lcs.peek() != target.peek() && !self.is_full() {
             self.push(*target.next().unwrap()).unwrap();
@@ -133,10 +128,7 @@ impl InstructionBytes for AddInstruction {
 
 impl Default for AddInstruction {
     fn default() -> Self {
-        Self::new(vec![
-            0;
-            InstructionLength::MIN.try_into().unwrap()
-        ])
+        Self::new(vec![0; InstructionLength::MIN.try_into().unwrap()])
     }
 }
 
@@ -192,17 +184,12 @@ mod add_instruction_tests {
 
     #[test]
     fn instruction_info() {
-        let mut instruction = AddInstruction::new(vec![
-            0;
-            InstructionLength::MAX.try_into().unwrap()
-        ]);
+        let mut instruction =
+            AddInstruction::new(vec![0; InstructionLength::MAX.try_into().unwrap()]);
         assert_eq!(instruction.len(), InstructionLength::MAX);
         assert!(instruction.is_full());
 
-        instruction = AddInstruction::new(vec![
-            0;
-            InstructionLength::MIN.try_into().unwrap()
-        ]);
+        instruction = AddInstruction::new(vec![0; InstructionLength::MIN.try_into().unwrap()]);
         assert_eq!(instruction.len(), InstructionLength::MIN);
         assert!(instruction.is_empty());
 
@@ -227,10 +214,7 @@ mod add_instruction_tests {
     #[test]
     fn instruction_content_push() {
         let mut instruction =
-            AddInstruction::new(vec![
-                0;
-                (InstructionLength::MAX - 1).try_into().unwrap()
-            ]);
+            AddInstruction::new(vec![0; (InstructionLength::MAX - 1).try_into().unwrap()]);
         assert!(instruction.push(0).is_ok());
         assert!(instruction
             .push(0)
@@ -259,10 +243,8 @@ mod add_instruction_tests {
 
     #[test]
     fn instruction_bytes_to_bytes() {
-        let mut instruction = AddInstruction::new(vec![
-            0;
-            InstructionLength::MAX.try_into().unwrap()
-        ]);
+        let mut instruction =
+            AddInstruction::new(vec![0; InstructionLength::MAX.try_into().unwrap()]);
         let mut bytes = vec![ADD_INSTRUCTION_SIGN];
         bytes.extend(instruction.len().to_be_bytes());
         bytes.extend(instruction.content.iter());
@@ -276,10 +258,8 @@ mod add_instruction_tests {
 
     #[test]
     fn instruction_bytes_try_from_bytes_ok() {
-        let mut instruction = AddInstruction::new(vec![
-            0;
-            InstructionLength::MAX.try_into().unwrap()
-        ]);
+        let mut instruction =
+            AddInstruction::new(vec![0; InstructionLength::MAX.try_into().unwrap()]);
         assert_eq!(
             AddInstruction::try_from_bytes(&mut instruction.to_bytes().iter().peekable()).unwrap(),
             instruction
@@ -309,10 +289,7 @@ mod add_instruction_tests {
 
         bytes = vec![ADD_INSTRUCTION_SIGN];
         bytes.extend(InstructionLength::MAX.to_be_bytes());
-        bytes.append(&mut vec![
-            0;
-            InstructionLength::MAX as usize - 1
-        ]);
+        bytes.append(&mut vec![0; InstructionLength::MAX as usize - 1]);
         assert_eq!(
             AddInstruction::try_from_bytes(&mut bytes.iter().peekable()).unwrap_err(),
             InstructionError::MissingContent

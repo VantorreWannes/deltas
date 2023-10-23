@@ -5,11 +5,9 @@ pub mod copy_instruction;
 pub mod delta_instruction;
 pub mod remove_instruction;
 
-type InstructionItem = u8;
 type InstructionLength = u8;
 
 pub type Result<T> = std::result::Result<T, InstructionError>;
-pub type InstructionItemIter<'a> = Peekable<Iter<'a, InstructionItem>>;
 
 const REMOVE_INSTRUCTION_SIGN: u8 = b'-';
 const ADD_INSTRUCTION_SIGN: u8 = b'+';
@@ -34,13 +32,13 @@ pub trait InstructionInfo {
 }
 
 pub trait InstructionContent {
-    fn push(&mut self, content: InstructionItem) -> Result<()>;
+    fn push(&mut self, content: u8) -> Result<()>;
 
     fn fill(
         &mut self,
-        lcs: &mut InstructionItemIter,
-        source: &mut InstructionItemIter,
-        target: &mut InstructionItemIter,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+        source: &mut Peekable<Iter<'_, u8>>,
+        target: &mut Peekable<Iter<'_, u8>>,
     );
 
     fn apply(&self, source: &mut Iter<'_, u8>, target: &mut Vec<u8>);
@@ -96,7 +94,7 @@ impl std::fmt::Display for InstructionError {
             InstructionError::InvalidContent => write!(
                 f,
                 "Not enough bytes found to create an item item of type {}",
-                std::any::type_name::<InstructionItem>()
+                std::any::type_name::<u8>()
             ),
         }
     }
