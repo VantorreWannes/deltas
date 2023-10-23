@@ -48,7 +48,7 @@ impl InstructionInfo for DeltaInstruction {
 }
 
 impl InstructionContent for DeltaInstruction {
-    fn push(&mut self, content: super::InstructionItem) -> Result<()> {
+    fn push(&mut self, content: u8) -> Result<()> {
         match self {
             DeltaInstruction::Remove(instruction) => instruction.push(content),
             DeltaInstruction::Add(instruction) => instruction.push(content),
@@ -58,9 +58,9 @@ impl InstructionContent for DeltaInstruction {
 
     fn fill(
         &mut self,
-        lcs: &mut super::InstructionItemIter,
-        source: &mut super::InstructionItemIter,
-        target: &mut super::InstructionItemIter,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+        source: &mut Peekable<Iter<'_, u8>>,
+        target: &mut Peekable<Iter<'_, u8>>,
     ) {
         match self {
             DeltaInstruction::Remove(instruction) => instruction.fill(lcs, source, target),
@@ -187,7 +187,6 @@ impl TryFrom<&[u8]> for DeltaInstruction {
 
 #[cfg(test)]
 mod delta_instruction_tests {
-    use crate::instructions::InstructionItem;
 
     use super::*;
 
@@ -252,7 +251,7 @@ mod delta_instruction_tests {
         let mut wrapped_add_instruction: DeltaInstruction = AddInstruction::default().into();
         let mut wrapped_copy_instruction: DeltaInstruction = CopyInstruction::default().into();
 
-        let instruction_item = InstructionItem::default();
+        let instruction_item = 0;
         assert_eq!(
             wrapped_remove_instruction.push(instruction_item),
             remove_instruction.push(instruction_item)

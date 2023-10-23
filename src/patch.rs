@@ -4,8 +4,7 @@ use crate::{
     instructions::{
         add_instruction::AddInstruction, copy_instruction::CopyInstruction,
         delta_instruction::DeltaInstruction, remove_instruction::RemoveInstruction,
-        InstructionBytes, InstructionContent, InstructionError, InstructionInfo,
-        InstructionItemIter, Result,
+        InstructionBytes, InstructionContent, InstructionError, InstructionInfo, Result,
     },
     lcs::Lcs,
 };
@@ -31,9 +30,9 @@ impl Patch {
     }
 
     fn create_instructions(
-        lcs: &mut InstructionItemIter,
-        source: &mut InstructionItemIter,
-        target: &mut InstructionItemIter,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+        source: &mut Peekable<Iter<'_, u8>>,
+        target: &mut Peekable<Iter<'_, u8>>,
     ) -> Vec<DeltaInstruction> {
         let mut instructions: Vec<DeltaInstruction> = Vec::new();
         while lcs.peek().is_some() {
@@ -171,7 +170,6 @@ mod remove_instruction_tests {
 
     #[test]
     fn new() {
-        //SPECIAL BUG: dbg!(Patch::new(b"ABCCCC", b"AC"));
         assert_eq!(
             Patch::new(b"BBAAA", b"AAABBBAA").instructions,
             vec![

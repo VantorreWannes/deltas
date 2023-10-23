@@ -1,17 +1,17 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionItem,
-    InstructionLength, Result, COPY_INSTRUCTION_SIGN,
+    InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionLength,
+    Result, COPY_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CopyInstruction {
-    content: Vec<InstructionItem>,
+    content: Vec<u8>,
 }
 
 impl CopyInstruction {
-    pub fn new(content: Vec<InstructionItem>) -> Self {
+    pub fn new(content: Vec<u8>) -> Self {
         assert!(
             content.len() <= InstructionLength::MAX.try_into().unwrap(),
             "Instruction content exceeded {} items",
@@ -35,17 +35,12 @@ impl InstructionInfo for CopyInstruction {
     }
 
     fn non_default_item_count(&self) -> Option<InstructionLength> {
-        Some(
-            self.content
-                .iter()
-                .filter(|item| **item != InstructionItem::default())
-                .count() as InstructionLength,
-        )
+        Some(self.content.iter().filter(|item| **item != 0).count() as InstructionLength)
     }
 }
 
 impl InstructionContent for CopyInstruction {
-    fn push(&mut self, content: InstructionItem) -> Result<()> {
+    fn push(&mut self, content: u8) -> Result<()> {
         if self.is_full() {
             return Err(InstructionError::ContentOverflow);
         }
@@ -55,9 +50,9 @@ impl InstructionContent for CopyInstruction {
 
     fn fill(
         &mut self,
-        lcs: &mut super::InstructionItemIter,
-        source: &mut super::InstructionItemIter,
-        target: &mut super::InstructionItemIter,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+        source: &mut Peekable<Iter<'_, u8>>,
+        target: &mut Peekable<Iter<'_, u8>>,
     ) {
         while ((lcs.peek().is_some()
             && (source.peek() == lcs.peek() && lcs.peek() == target.peek()))
@@ -117,21 +112,8 @@ impl InstructionBytes for CopyInstruction {
                 .map_err(|_| InstructionError::InvalidLength)?,
         );
 
-        let content_bytes: Vec<u8> = bytes.take(length.try_into().unwrap()).copied().collect();
-
-        let content: Result<Vec<InstructionItem>> = content_bytes
-            .chunks(std::mem::size_of::<InstructionItem>())
-            .map(|chunk: &[u8]| -> Result<InstructionItem> {
-                Ok(InstructionItem::from_be_bytes(
-                    chunk
-                        .try_into()
-                        .map_err(|_| InstructionError::InvalidContent)?,
-                ))
-            })
-            .collect();
-
-        let content = content?;
-
+        let content: Vec<u8> = bytes.take(length.try_into().unwrap()).copied().collect();
+        
         if content.len() < length as usize {
             return Err(InstructionError::MissingContent);
         }
@@ -143,7 +125,7 @@ impl InstructionBytes for CopyInstruction {
 impl Default for CopyInstruction {
     fn default() -> Self {
         Self {
-            content: vec![InstructionItem::default(); InstructionLength::MIN.try_into().unwrap()],
+            content: vec![0; InstructionLength::MIN.try_into().unwrap()],
         }
     }
 }
@@ -200,17 +182,12 @@ mod copy_instruction_tests {
 
     #[test]
     fn instruction_info() {
-        let mut instruction = CopyInstruction::new(vec![
-            InstructionItem::default();
-            InstructionLength::MAX.try_into().unwrap()
-        ]);
+        let mut instruction =
+            CopyInstruction::new(vec![0; InstructionLength::MAX.try_into().unwrap()]);
         assert_eq!(instruction.len(), InstructionLength::MAX);
         assert!(instruction.is_full());
 
-        instruction = CopyInstruction::new(vec![
-            InstructionItem::default();
-            InstructionLength::MIN.try_into().unwrap()
-        ]);
+        instruction = CopyInstruction::new(vec![0; InstructionLength::MIN.try_into().unwrap()]);
         assert_eq!(instruction.len(), InstructionLength::MIN);
         assert!(instruction.is_empty());
 
@@ -222,11 +199,11 @@ mod copy_instruction_tests {
     fn non_default_item_count() {
         let mut instruction = CopyInstruction::default();
         for _ in 0..(InstructionLength::MAX / 2) {
-            instruction.push(InstructionItem::default()).unwrap();
+            instruction.push(0).unwrap();
             assert_eq!(instruction.non_default_item_count().unwrap(), 0);
         }
         for i in 0..(InstructionLength::MAX / 2) {
-            instruction.push(InstructionItem::default() + 1).unwrap();
+            instruction.push(0 + 1).unwrap();
             assert_eq!(instruction.non_default_item_count().unwrap(), i + 1);
         }
     }
@@ -234,13 +211,10 @@ mod copy_instruction_tests {
     #[test]
     fn instruction_content_push() {
         let mut instruction =
-            CopyInstruction::new(vec![
-                InstructionItem::default();
-                (InstructionLength::MAX - 1).try_into().unwrap()
-            ]);
-        assert!(instruction.push(InstructionItem::default()).is_ok());
+            CopyInstruction::new(vec![0; (InstructionLength::MAX - 1).try_into().unwrap()]);
+        assert!(instruction.push(0).is_ok());
         assert!(instruction
-            .push(InstructionItem::default())
+            .push(0)
             .is_err_and(|err| err == InstructionError::ContentOverflow));
     }
 
@@ -264,10 +238,8 @@ mod copy_instruction_tests {
 
     #[test]
     fn instruction_bytes_to_bytes() {
-        let mut instruction = CopyInstruction::new(vec![
-            InstructionItem::default();
-            InstructionLength::MAX.try_into().unwrap()
-        ]);
+        let mut instruction =
+            CopyInstruction::new(vec![0; InstructionLength::MAX.try_into().unwrap()]);
         let mut bytes = vec![COPY_INSTRUCTION_SIGN];
         bytes.extend(instruction.len().to_be_bytes());
         bytes.extend(instruction.content.iter());
@@ -281,10 +253,8 @@ mod copy_instruction_tests {
 
     #[test]
     fn instruction_bytes_try_from_bytes_ok() {
-        let mut instruction = CopyInstruction::new(vec![
-            InstructionItem::default();
-            InstructionLength::MAX.try_into().unwrap()
-        ]);
+        let mut instruction =
+            CopyInstruction::new(vec![0; InstructionLength::MAX.try_into().unwrap()]);
         assert_eq!(
             CopyInstruction::try_from_bytes(&mut instruction.to_bytes().iter().peekable()).unwrap(),
             instruction
@@ -314,10 +284,7 @@ mod copy_instruction_tests {
 
         bytes = vec![COPY_INSTRUCTION_SIGN];
         bytes.extend(InstructionLength::MAX.to_be_bytes());
-        bytes.append(&mut vec![
-            InstructionItem::default();
-            InstructionLength::MAX as usize - 1
-        ]);
+        bytes.append(&mut vec![0; InstructionLength::MAX as usize - 1]);
         assert_eq!(
             CopyInstruction::try_from_bytes(&mut bytes.iter().peekable()).unwrap_err(),
             InstructionError::MissingContent

@@ -1,8 +1,8 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionItem,
-    InstructionLength, Result, REMOVE_INSTRUCTION_SIGN,
+    InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionLength,
+    Result, REMOVE_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -35,7 +35,7 @@ impl InstructionInfo for RemoveInstruction {
 }
 
 impl InstructionContent for RemoveInstruction {
-    fn push(&mut self, _: InstructionItem) -> Result<()> {
+    fn push(&mut self, _: u8) -> Result<()> {
         if self.is_full() {
             return Err(InstructionError::ContentOverflow);
         }
@@ -45,9 +45,9 @@ impl InstructionContent for RemoveInstruction {
 
     fn fill(
         &mut self,
-        lcs: &mut super::InstructionItemIter,
-        source: &mut super::InstructionItemIter,
-        _: &mut super::InstructionItemIter,
+        lcs: &mut Peekable<Iter<'_, u8>>,
+        source: &mut Peekable<Iter<'_, u8>>,
+        _: &mut Peekable<Iter<'_, u8>>,
     ) {
         while source.peek().is_some() && lcs.peek() != source.peek() && !self.is_full() {
             self.push(*source.next().unwrap()).unwrap();
@@ -176,11 +176,8 @@ mod remove_instruction_tests {
     #[test]
     fn instruction_content_push() {
         let mut instruction = RemoveInstruction::new(InstructionLength::MAX - 1);
-        assert!(instruction.push(InstructionItem::default()).is_ok());
-        assert_eq!(
-            instruction.push(InstructionItem::default()),
-            Err(InstructionError::ContentOverflow)
-        );
+        assert!(instruction.push(0).is_ok());
+        assert_eq!(instruction.push(0), Err(InstructionError::ContentOverflow));
     }
 
     fn fill_wrapper(source: &[u8], target: &[u8]) -> RemoveInstruction {
