@@ -1,19 +1,38 @@
-mod delta_instruction;
-mod delta_instruction_error;
-mod delta_traits;
-pub mod delta_patch;
-
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+mod instructions;
+mod lcs;
+pub mod patch;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::fs;
+
+    use crate::patch::Patch;
+
+    #[test]
+    fn speed() {
+        let source = fs::read("files/source.txt").unwrap();
+        let target = fs::read("files/target.txt").unwrap();
+        let patch = Patch::new(&source, &target);
+        let patch_bytes = patch.to_bytes();
+        fs::write("files/raw_patch", patch_bytes).unwrap();
+    }
 
     #[test]
     fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+        let source = fs::read("files/source.txt").unwrap();
+        let target = fs::read("files/target.txt").unwrap();
+        let patch = Patch::new(&source, &target);
+        let result = patch.apply(&source).unwrap();
+        assert_eq!(result, target);
+    }
+
+    #[test]
+    fn patch_bytes() {
+        let source = fs::read("files/source.txt").unwrap();
+        let target = fs::read("files/target.txt").unwrap();
+        let patch = Patch::new(&source, &target);
+        let patch_bytes = patch.to_bytes();
+        let constructed_patch = Patch::try_from_bytes(&patch_bytes).unwrap();
+        assert_eq!(patch, constructed_patch);
     }
 }
