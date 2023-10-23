@@ -1,35 +1,35 @@
 use std::{iter::Peekable, slice::Iter};
 
 use super::{
-    InstructionBytes, InstructionContent, InstructionError, InstructionInfo, InstructionLength,
+    InstructionBytes, InstructionContent, InstructionError, InstructionInfo,
     Result, REMOVE_INSTRUCTION_SIGN,
 };
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct RemoveInstruction {
-    length: InstructionLength,
+    length: u8,
 }
 
 impl RemoveInstruction {
-    pub fn new(length: InstructionLength) -> Self {
+    pub fn new(length: u8) -> Self {
         Self { length }
     }
 }
 
 impl InstructionInfo for RemoveInstruction {
-    fn len(&self) -> InstructionLength {
+    fn len(&self) -> u8 {
         self.length
     }
 
     fn is_empty(&self) -> bool {
-        self.len() == InstructionLength::MIN
+        self.len() == u8::MIN
     }
 
     fn is_full(&self) -> bool {
-        self.len() == InstructionLength::MAX
+        self.len() == u8::MAX
     }
 
-    fn non_default_item_count(&self) -> Option<InstructionLength> {
+    fn non_default_item_count(&self) -> Option<u8> {
         None
     }
 }
@@ -67,7 +67,7 @@ impl InstructionBytes for RemoveInstruction {
     }
 
     fn byte_length(&self) -> usize {
-        std::mem::size_of::<InstructionLength>() + 1
+        std::mem::size_of::<u8>() + 1
     }
 
     fn to_bytes(&self) -> Vec<u8> {
@@ -89,10 +89,10 @@ impl InstructionBytes for RemoveInstruction {
         }
 
         let length_bytes: Vec<u8> = bytes
-            .take(std::mem::size_of::<InstructionLength>())
+            .take(std::mem::size_of::<u8>())
             .copied()
             .collect();
-        let length = InstructionLength::from_be_bytes(
+        let length = u8::from_be_bytes(
             length_bytes
                 .as_slice()
                 .try_into()
@@ -105,7 +105,7 @@ impl InstructionBytes for RemoveInstruction {
 
 impl Default for RemoveInstruction {
     fn default() -> Self {
-        Self::new(InstructionLength::MIN)
+        Self::new(u8::MIN)
     }
 }
 
@@ -161,12 +161,12 @@ mod remove_instruction_tests {
 
     #[test]
     fn instruction_info() {
-        let mut instruction = RemoveInstruction::new(InstructionLength::MAX);
-        assert_eq!(instruction.len(), InstructionLength::MAX);
+        let mut instruction = RemoveInstruction::new(u8::MAX);
+        assert_eq!(instruction.len(), u8::MAX);
         assert!(instruction.is_full());
 
-        instruction = RemoveInstruction::new(InstructionLength::MIN);
-        assert_eq!(instruction.len(), InstructionLength::MIN);
+        instruction = RemoveInstruction::new(u8::MIN);
+        assert_eq!(instruction.len(), u8::MIN);
         assert!(instruction.is_empty());
 
         let default_instruction = RemoveInstruction::default();
@@ -175,7 +175,7 @@ mod remove_instruction_tests {
 
     #[test]
     fn instruction_content_push() {
-        let mut instruction = RemoveInstruction::new(InstructionLength::MAX - 1);
+        let mut instruction = RemoveInstruction::new(u8::MAX - 1);
         assert!(instruction.push(0).is_ok());
         assert_eq!(instruction.push(0), Err(InstructionError::ContentOverflow));
     }
@@ -202,7 +202,7 @@ mod remove_instruction_tests {
 
     #[test]
     fn instruction_bytes_to_bytes() {
-        let mut instruction = RemoveInstruction::new(InstructionLength::MAX);
+        let mut instruction = RemoveInstruction::new(u8::MAX);
         let mut bytes = vec![REMOVE_INSTRUCTION_SIGN];
         bytes.extend(instruction.len().to_be_bytes());
         assert_eq!(instruction.to_bytes(), bytes);
@@ -215,7 +215,7 @@ mod remove_instruction_tests {
 
     #[test]
     fn instruction_bytes_try_from_bytes_ok() {
-        let mut instruction = RemoveInstruction::new(InstructionLength::MAX);
+        let mut instruction = RemoveInstruction::new(u8::MAX);
         let mut bytes = instruction.to_bytes();
         assert_eq!(
             RemoveInstruction::try_from_bytes(&mut bytes.iter().peekable()),

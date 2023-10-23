@@ -14,7 +14,7 @@ pub enum DeltaInstruction {
 }
 
 impl InstructionInfo for DeltaInstruction {
-    fn len(&self) -> super::InstructionLength {
+    fn len(&self) -> u8 {
         match self {
             DeltaInstruction::Remove(instruction) => instruction.len(),
             DeltaInstruction::Add(instruction) => instruction.len(),
@@ -38,7 +38,7 @@ impl InstructionInfo for DeltaInstruction {
         }
     }
 
-    fn non_default_item_count(&self) -> Option<super::InstructionLength> {
+    fn non_default_item_count(&self) -> Option<u8> {
         match self {
             DeltaInstruction::Remove(instruction) => instruction.non_default_item_count(),
             DeltaInstruction::Add(instruction) => instruction.non_default_item_count(),
